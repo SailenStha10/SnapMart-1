@@ -10,5 +10,3 @@ export function AuthProvider({ children }){
     </AuthContext.Provider>
   )
 }
-
-// Placeholder auth context for starters

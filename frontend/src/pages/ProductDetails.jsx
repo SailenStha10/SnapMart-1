@@ -6,7 +6,7 @@ export default function ProductDetails(){
   return (
     <div>
       <h1 className="text-2xl font-bold mb-4">Product Details</h1>
-      <p>Placeholder details for product <strong>{id || 'sample-id'}</strong></p>
+      <p>Product details will load here</p>
     </div>
   )
 }

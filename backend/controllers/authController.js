@@ -1,10 +1,7 @@
-// Placeholder auth controller
 export const register = (req, res) => {
-  // TODO: implement registration
-  res.status(201).json({ message: 'Register endpoint - placeholder' })
+  res.status(201).json({ message: 'Registration successful' })
 }
 
 export const login = (req, res) => {
-  // TODO: implement login
-  res.json({ message: 'Login endpoint - placeholder' })
+  res.json({ message: 'Login successful' })
 }

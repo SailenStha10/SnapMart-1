@@ -1,6 +1,5 @@
 import React from 'react'
 
-// Minimal product card placeholder
 export default function ProductCard({ product }){
   return (
     <div className="border rounded-md p-4 bg-white">
