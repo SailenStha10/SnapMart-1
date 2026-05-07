@@ -1,6 +1,6 @@
 # Snapmart — Week 3 Project Scaffold
 
-Professional MERN starter scaffold for Snapmart. This is Week 3 deliverable: project setup and architecture only.
+This is Week 3 deliverable: project setup and structure1 only.
 
 Structure overview and team responsibilities are listed below.
 
@@ -26,14 +26,5 @@ cp ../backend/.env.sample .env || cp .env.sample .env
 npm run dev
 ```
 
-Team member responsibilities:
-- Member 1: Frontend Project Setup (frontend folder, Vite, Tailwind)
-- Member 2: Components Structure (components folders + placeholders)
-- Member 3: Pages Structure (pages folder + placeholders)
-- Member 4: Routing Structure (AppRoutes, MainLayout)
-- Member 5: Backend Server Setup (server.js, middleware)
-- Member 6: Database + Config Setup (config/db.js, .env.sample)
-- Member 7: API Architecture (routes & controllers)
-- Member 8: Models + Documentation (models + README + docs)
 
-API plan and folder structure inside `docs/`.
+
