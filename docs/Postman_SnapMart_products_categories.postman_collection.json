@@ -1,0 +1,114 @@
+{
+  "info": {
+    "name": "SnapMart - Products & Categories",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get all products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","products"]
+        }
+      }
+    },
+    {
+      "name": "Get product by slug",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/products/:slug",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","products",":slug"]
+        }
+      }
+    },
+    {
+      "name": "Create product (admin)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-admin", "value": "true" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Test Product\",\n  \"description\": \"Sample\",\n  \"price\": 19.99,\n  \"stock\": 10,\n  \"category_id\": \"<category_id>\",\n  \"images\": [\"https://.../1.jpg\"]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/products",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","products"]
+        }
+      }
+    },
+    {
+      "name": "Update product (admin)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "x-admin", "value": "true" }
+        ],
+        "body": { "mode": "raw", "raw": "{ \"price\": 24.99 }" },
+        "url": { "raw": "{{baseUrl}}/api/products/:id", "host": ["{{baseUrl}}"], "path": ["api","products",":id"] }
+      }
+    },
+    {
+      "name": "Delete product (admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [ { "key": "x-admin", "value": "true" } ],
+        "url": { "raw": "{{baseUrl}}/api/products/:id", "host": ["{{baseUrl}}"], "path": ["api","products",":id"] }
+      }
+    },
+    {
+      "name": "Get all categories",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api","categories"] }
+      }
+    },
+    {
+      "name": "Get category by slug",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/categories/:slug", "host": ["{{baseUrl}}"], "path": ["api","categories",":slug"] }
+      }
+    },
+    {
+      "name": "Create category (admin)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "x-admin", "value": "true" } ],
+        "body": { "mode": "raw", "raw": "{ \"name\": \"Running Shoes\", \"image_url\": \"https://.../img.jpg\" }" },
+        "url": { "raw": "{{baseUrl}}/api/categories", "host": ["{{baseUrl}}"], "path": ["api","categories"] }
+      }
+    },
+    {
+      "name": "Update category (admin)",
+      "request": {
+        "method": "PUT",
+        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "x-admin", "value": "true" } ],
+        "body": { "mode": "raw", "raw": "{ \"name\": \"New Name\" }" },
+        "url": { "raw": "{{baseUrl}}/api/categories/:id", "host": ["{{baseUrl}}"], "path": ["api","categories",":id"] }
+      }
+    },
+    {
+      "name": "Delete category (admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [ { "key": "x-admin", "value": "true" } ],
+        "url": { "raw": "{{baseUrl}}/api/categories/:id", "host": ["{{baseUrl}}"], "path": ["api","categories",":id"] }
+      }
+    }
+  ],
+  "variable": [ { "key": "baseUrl", "value": "http://localhost:5000" } ]
+}
