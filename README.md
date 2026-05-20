@@ -17,12 +17,10 @@ Run api (backend):
 ```bash
 cd api
 npm install
-cp ../backend/.env.sample .env || cp .env.sample .env
-# If port 5000 is in use on macOS, servers are configured to fall back
-# to safer defaults. You can override ports by editing `.env` files:
-# - `backend/.env` (default PORT=5001)
-# - `api/.env` (default PORT=5002)
-# update `.env` if needed (MONGODB_URI)
+cp .env.sample .env
+# If port 5000 is in use on macOS, the API falls back to the configured PORT
+# in `.env` (default PORT=5002).
+# Update `MONGODB_URI` and `JWT_SECRET` in `.env` before starting.
 npm run dev
 ```
 
