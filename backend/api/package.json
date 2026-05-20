@@ -12,6 +12,8 @@
     "dotenv": "^16.6.1",
     "express": "^4.22.2",
     "mongoose": "^7.8.9",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
     "slugify": "^1.6.9"
   },
   "devDependencies": {
