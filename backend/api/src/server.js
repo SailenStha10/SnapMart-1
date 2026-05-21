@@ -8,7 +8,8 @@ import cartRoutes from './routes/cartRoutes.js'
 import orderRoutes from './routes/orderRoutes.js'
 import errorHandler from './middlewares/errorHandler.js'
 import categoryRoutes from './routes/categoryRoutes.js'
-import authMiddleware from './middlewares/authMiddleware.js'
+import { authMiddleware } from './middlewares/authMiddleware.js'
+import { scheduleCartCleanup } from './utils/cartCleanup.js'
 
 dotenv.config()
 
@@ -16,10 +17,13 @@ dotenv.config()
 const app = express()
 app.use(cors())
 app.use(express.json())
-app.use(authMiddleware)  // Set req.user globally
+app.use(authMiddleware)  // Set req.user globally (works for both auth and guest)
 
 // Connect to DB (config lives in ../config)
 connectDB()
+
+// Schedule cart cleanup for expired guest carts
+scheduleCartCleanup()
 
 // API routes (under src/routes)
 app.use('/api/auth', authRoutes)

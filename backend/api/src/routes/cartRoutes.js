@@ -1,9 +1,25 @@
 import express from 'express'
-import { getCart, updateCart } from '../controllers/cartController.js'
+import { 
+  getCart, 
+  addToCart, 
+  updateCartItem, 
+  removeFromCart, 
+  clearCart, 
+  initiateCheckout, 
+  abandonCheckout,
+  updateCart 
+} from '../controllers/cartController.js'
+import { requireGuestOrAuth } from '../middlewares/authMiddleware.js'
 
 const router = express.Router()
 
-router.get('/', getCart)
-router.post('/', updateCart)
+router.get('/', requireGuestOrAuth, getCart)
+router.post('/add', requireGuestOrAuth, addToCart)
+router.put('/item', requireGuestOrAuth, updateCartItem)
+router.delete('/item/:productId', requireGuestOrAuth, removeFromCart)
+router.delete('/clear', requireGuestOrAuth, clearCart)
+router.post('/checkout', requireGuestOrAuth, initiateCheckout)
+router.post('/abandon', abandonCheckout)
+router.post('/', requireGuestOrAuth, updateCart)
 
 export default router
