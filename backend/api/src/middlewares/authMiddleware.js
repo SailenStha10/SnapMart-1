@@ -1,41 +1,50 @@
-import { verifyToken } from '../utils/jwt.js'
+import jwt from 'jsonwebtoken'
+import User from '../models/User.js'
 
-function getTokenFromRequest(req) {
-  const header = req.headers.authorization || ''
-
-  if (!header.startsWith('Bearer ')) {
-    return null
-  }
-
-  return header.slice(7).trim()
-}
-
-function authenticateRequest(req) {
-  const token = getTokenFromRequest(req)
-
-  if (!token) {
-    return null
-  }
-
+export const authMiddleware = async (req, res, next) => {
   try {
-    return verifyToken(token)
-  } catch {
-    return null
+    const token = req.header('Authorization')?.replace('Bearer ', '')
+    
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
+      const user = await User.findById(decoded.id)
+      
+      if (user) {
+        req.user = {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          isGuest: user.isGuest,
+          isAdmin: user.role === 'admin'
+        }
+        req.isAuthenticated = true
+      } else {
+        req.isAuthenticated = false
+      }
+    } else {
+      req.isAuthenticated = false
+    }
+    
+    next()
+  } catch (error) {
+    req.isAuthenticated = false
+    next()
   }
 }
 
-export default function authMiddleware(req, res, next) {
-  req.user = authenticateRequest(req)
+export const requireAuth = (req, res, next) => {
+  if (!req.isAuthenticated) {
+    return res.status(401).json({ message: 'Authentication required' })
+  }
   next()
 }
 
-export function requireAuth(req, res, next) {
-  const user = authenticateRequest(req)
-
-  if (!user) {
-    return res.status(401).json({ message: 'Authentication required' })
+export const requireGuestOrAuth = (req, res, next) => {
+  const sessionId = req.header('X-Session-ID')
+  if (!req.isAuthenticated && !sessionId) {
+    return res.status(401).json({ message: 'Authentication or session required' })
   }
-
-  req.user = user
-  return next()
+  next()
 }
+
+export default authMiddleware
