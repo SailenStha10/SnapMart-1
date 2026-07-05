@@ -2,6 +2,9 @@ import React from 'react'
 import { Routes, Route } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout'
 import Home from '../pages/Home'
+import About from '../pages/About'
+import Services from '../pages/Services'
+import Contact from '../pages/Contact'
 import Products from '../pages/Products'
 import ProductDetails from '../pages/ProductDetails'
 import Cart from '../pages/Cart'
@@ -14,7 +17,10 @@ import NotFound from '../pages/NotFound'
 export default function AppRoutes(){
   return (
     <Routes>
-      <Route path="/" element={<MainLayout><Home/></MainLayout>} />
+      <Route path="/" element={<MainLayout><Home initialSection="hero" /></MainLayout>} />
+      <Route path="/about" element={<MainLayout><Home initialSection="about" /></MainLayout>} />
+      <Route path="/services" element={<MainLayout><Home initialSection="services" /></MainLayout>} />
+      <Route path="/contact" element={<MainLayout><Home initialSection="contact" /></MainLayout>} />
       <Route path="/products" element={<MainLayout><Products/></MainLayout>} />
       <Route path="/products/:id" element={<MainLayout><ProductDetails/></MainLayout>} />
       <Route path="/cart" element={<MainLayout><Cart/></MainLayout>} />
