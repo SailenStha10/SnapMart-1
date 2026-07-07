@@ -1,13 +1,55 @@
 import React, { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiLock, FiUser } from 'react-icons/fi'
+import api from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 export default function AuthPage({ initialMode = 'login' }){
   const [mode, setMode] = useState(initialMode)
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+  const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+  const { setSession } = useAuth()
 
   const isLogin = mode === 'login'
 
   const modeLabel = useMemo(() => (isLogin ? 'Login' : 'Sign up'), [isLogin])
+
+  const redirectForRole = (role) => (role === 'admin' ? '/admin' : '/dashboard')
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data } = await api.post('/auth/login', loginForm)
+      setSession(data.user, data.token)
+      navigate(redirectForRole(data.user.role), { replace: true })
+    } catch (loginError) {
+      setError(loginError.response?.data?.message || 'Unable to sign in.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSignupSubmit = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const { data } = await api.post('/auth/register', signupForm)
+      setSession(data.user, data.token)
+      navigate(redirectForRole(data.user.role), { replace: true })
+    } catch (signupError) {
+      setError(signupError.response?.data?.message || 'Unable to create account.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="grid min-h-[calc(100vh-180px)] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr]">
@@ -70,11 +112,25 @@ export default function AuthPage({ initialMode = 'login' }){
                   </div>
                 </div>
 
-                <form className="mt-6 space-y-4">
-                  <input className="input-field" placeholder="Email address" />
-                  <input className="input-field" type="password" placeholder="Password" />
-                  <button type="button" className="btn-primary w-full">
-                    Sign in <FiArrowRight />
+                <form className="mt-6 space-y-4" onSubmit={handleLoginSubmit}>
+                  <input
+                    className="input-field"
+                    type="email"
+                    placeholder="Email address"
+                    value={loginForm.email}
+                    onChange={(event) => setLoginForm((current) => ({ ...current, email: event.target.value }))}
+                    required
+                  />
+                  <input
+                    className="input-field"
+                    type="password"
+                    placeholder="Password"
+                    value={loginForm.password}
+                    onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
+                    required
+                  />
+                  <button type="submit" className="btn-primary w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : <>Sign in <FiArrowRight /></>}
                   </button>
                 </form>
               </div>
@@ -90,18 +146,39 @@ export default function AuthPage({ initialMode = 'login' }){
                   </div>
                 </div>
 
-                <form className="mt-6 space-y-4">
-                  <input className="input-field" placeholder="Full name" />
-                  <input className="input-field" placeholder="Email address" />
-                  <input className="input-field" type="password" placeholder="Create password" />
-                  <button type="button" className="btn-primary w-full">
-                    Create account <FiArrowRight />
+                <form className="mt-6 space-y-4" onSubmit={handleSignupSubmit}>
+                  <input
+                    className="input-field"
+                    placeholder="Full name"
+                    value={signupForm.name}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, name: event.target.value }))}
+                    required
+                  />
+                  <input
+                    className="input-field"
+                    type="email"
+                    placeholder="Email address"
+                    value={signupForm.email}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, email: event.target.value }))}
+                    required
+                  />
+                  <input
+                    className="input-field"
+                    type="password"
+                    placeholder="Create password"
+                    value={signupForm.password}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, password: event.target.value }))}
+                    required
+                  />
+                  <button type="submit" className="btn-primary w-full" disabled={loading}>
+                    {loading ? 'Creating account...' : <>Create account <FiArrowRight /></>}
                   </button>
                 </form>
               </div>
             </div>
           </div>
 
+          {error ? <p className="mt-4 text-center text-sm font-medium text-red-500">{error}</p> : null}
           <p className="mt-5 text-center text-sm text-slate-500">
             Current view: <span className="font-semibold text-primary-strong">{modeLabel}</span>
           </p>

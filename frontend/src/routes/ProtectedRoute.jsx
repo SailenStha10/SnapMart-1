@@ -1,15 +1,15 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 function ProtectedRoute({ adminOnly = false }) {
-  const token = localStorage.getItem('token')
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const { isAuthenticated, isAdmin } = useAuth()
 
-  if (!token) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
-  if (adminOnly && user.role !== 'admin') {
-    return <Navigate to="/" replace />
+  if (adminOnly && !isAdmin) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <Outlet />
