@@ -29,13 +29,14 @@ export default function AppRoutes(){
       <Route path="/wishlist" element={<MainLayout><Wishlist/></MainLayout>} />
       <Route path="/login" element={<MainLayout><Login/></MainLayout>} />
       <Route path="/register" element={<MainLayout><Register/></MainLayout>} />
+      <Route path="/checkout" element={<MainLayout><Checkout/></MainLayout>} />
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<MainLayout><Dashboard/></MainLayout>} />
       </Route>
       <Route element={<ProtectedRoute adminOnly />}>
+        <Route path="/admin" element={<MainLayout><Dashboard/></MainLayout>} />
         <Route path="/admin/dashboard" element={<MainLayout><Dashboard/></MainLayout>} />
       </Route>
-      <Route path="/checkout" element={<MainLayout><Checkout/></MainLayout>} />
       <Route path="*" element={<MainLayout><NotFound/></MainLayout>} />
     </Routes>
   )

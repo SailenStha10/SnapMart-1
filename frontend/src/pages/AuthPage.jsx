@@ -6,24 +6,23 @@ import { useAuth } from '../context/AuthContext'
 
 export default function AuthPage({ initialMode = 'login' }){
   const [mode, setMode] = useState(initialMode)
-  const [loading, setLoading] = useState(false)
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
   const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', role: 'user', adminKey: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const { signIn, register } = useAuth()
   const navigate = useNavigate()
 
   const isLogin = mode === 'login'
-
   const modeLabel = useMemo(() => (isLogin ? 'Login' : 'Sign up'), [isLogin])
 
-  const goToDashboard = (role) => {
-    navigate(role === 'admin' ? '/admin/dashboard' : '/dashboard')
-  }
+  const redirectForRole = (role) => (role === 'admin' ? '/admin/dashboard' : '/dashboard')
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault()
     setLoading(true)
+    setError('')
 
     try {
       const response = await signIn({
@@ -32,9 +31,11 @@ export default function AuthPage({ initialMode = 'login' }){
       })
 
       toast.success(response.message || 'Signed in successfully')
-      goToDashboard(response.user?.role)
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed')
+      navigate(redirectForRole(response.user?.role), { replace: true })
+    } catch (loginError) {
+      const message = loginError.response?.data?.message || 'Login failed'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -43,6 +44,7 @@ export default function AuthPage({ initialMode = 'login' }){
   const handleSignupSubmit = async (event) => {
     event.preventDefault()
     setLoading(true)
+    setError('')
 
     try {
       const response = await register({
@@ -54,9 +56,11 @@ export default function AuthPage({ initialMode = 'login' }){
       })
 
       toast.success(response.message || 'Account created successfully')
-      goToDashboard(response.user?.role || signupForm.role)
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Signup failed')
+      navigate(redirectForRole(response.user?.role || signupForm.role), { replace: true })
+    } catch (signupError) {
+      const message = signupError.response?.data?.message || 'Signup failed'
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -189,7 +193,7 @@ export default function AuthPage({ initialMode = 'login' }){
                         required
                       />
                       <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                        Admin signup requires the secure key configured on the server.
+                        Use admin123 to create an admin account.
                       </p>
                     </div>
                   )}
@@ -201,6 +205,7 @@ export default function AuthPage({ initialMode = 'login' }){
             </div>
           </div>
 
+          {error ? <p className="mt-4 text-center text-sm font-medium text-red-500">{error}</p> : null}
           <p className="mt-5 text-center text-sm text-slate-500">
             Current view: <span className="font-semibold text-primary-strong">{modeLabel}</span>
           </p>

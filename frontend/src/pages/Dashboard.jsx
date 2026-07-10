@@ -93,8 +93,7 @@ const StatCard = ({ title, value, helper, icon: Icon }) => (
 )
 
 export default function Dashboard() {
-  const { user } = useAuth()
-  const isAdmin = user?.role === 'admin'
+  const { user, isAdmin } = useAuth()
 
   const [productForm, setProductForm] = useState(defaultProductForm)
   const [products, setProducts] = useState([])

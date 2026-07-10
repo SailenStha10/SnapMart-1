@@ -11,7 +11,9 @@ const navItems = [
 ]
 
 export default function Navbar(){
-  const { user, logout } = useAuth()
+  const { isAuthenticated, isAdmin, logout } = useAuth()
+
+  const dashboardLink = isAdmin ? '/admin/dashboard' : '/dashboard'
 
   return (
     <nav className="pointer-events-none sticky top-4 z-30 px-4 sm:top-5 sm:px-5 lg:top-6">
@@ -40,10 +42,10 @@ export default function Navbar(){
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {user ? (
+          {isAuthenticated ? (
             <>
-              <Link to={user.role === 'admin' ? '/admin/dashboard' : '/dashboard'} className="btn-secondary text-sm">
-                My dashboard
+              <Link to={dashboardLink} className="btn-secondary text-sm">
+                {isAdmin ? 'Admin dashboard' : 'My dashboard'}
               </Link>
               <button type="button" onClick={logout} className="btn-secondary text-sm">
                 Logout <FiLogOut />
