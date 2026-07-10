@@ -1,6 +1,7 @@
 import React from 'react'
 import { NavLink, Link } from 'react-router-dom'
-import { FiArrowRight } from 'react-icons/fi'
+import { FiArrowRight, FiLogOut } from 'react-icons/fi'
+import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { to: '/', label: 'Home' },
@@ -10,6 +11,8 @@ const navItems = [
 ]
 
 export default function Navbar(){
+  const { user, logout } = useAuth()
+
   return (
     <nav className="pointer-events-none sticky top-4 z-30 px-4 sm:top-5 sm:px-5 lg:top-6">
       <div className="pointer-events-auto mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-[1.5rem] border border-white/65 bg-white/72 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.10)] backdrop-blur-2xl sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:px-6">
@@ -37,9 +40,20 @@ export default function Navbar(){
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <Link to="/login" className="btn-secondary text-sm">
-            Login / Sign up
-          </Link>
+          {user ? (
+            <>
+              <Link to={user.role === 'admin' ? '/admin/dashboard' : '/dashboard'} className="btn-secondary text-sm">
+                My dashboard
+              </Link>
+              <button type="button" onClick={logout} className="btn-secondary text-sm">
+                Logout <FiLogOut />
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="btn-secondary text-sm">
+              Login / Sign up
+            </Link>
+          )}
           <Link to="/products" className="btn-primary text-sm">
             Browse products <FiArrowRight />
           </Link>

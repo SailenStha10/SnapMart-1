@@ -31,12 +31,8 @@ export default function About(){
         <div className="relative mx-auto grid max-w-6xl gap-10 lg:min-h-[calc(100vh-14rem)] lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <div>
             <span className="section-kicker">About SnapMart</span>
-            <h1 className="mt-6 max-w-2xl text-4xl font-bold leading-tight text-primary-strong sm:text-5xl">
-              A dedicated page for the project story and structure.
-            </h1>
-            <p className="mt-5 max-w-2xl text-base text-slate-600 sm:text-lg">
-              The About page stays separate, centered, and scrollable so users can understand the project without switching context too often.
-            </p>
+           
+            
           </div>
           <div className="rounded-[1.8rem] border border-white/30 bg-white/18 p-6 backdrop-blur-sm">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Project focus</p>

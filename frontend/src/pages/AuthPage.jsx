@@ -1,33 +1,75 @@
 import React, { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FiArrowRight, FiLock, FiUser } from 'react-icons/fi'
+import { toast } from 'react-hot-toast'
+import { useAuth } from '../context/AuthContext'
 
 export default function AuthPage({ initialMode = 'login' }){
   const [mode, setMode] = useState(initialMode)
+  const [loading, setLoading] = useState(false)
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' })
+  const [signupForm, setSignupForm] = useState({ name: '', email: '', password: '', role: 'user', adminKey: '' })
+
+  const { signIn, register } = useAuth()
+  const navigate = useNavigate()
 
   const isLogin = mode === 'login'
 
   const modeLabel = useMemo(() => (isLogin ? 'Login' : 'Sign up'), [isLogin])
 
+  const goToDashboard = (role) => {
+    navigate(role === 'admin' ? '/admin/dashboard' : '/dashboard')
+  }
+
+  const handleLoginSubmit = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+
+    try {
+      const response = await signIn({
+        email: loginForm.email,
+        password: loginForm.password,
+      })
+
+      toast.success(response.message || 'Signed in successfully')
+      goToDashboard(response.user?.role)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Login failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSignupSubmit = async (event) => {
+    event.preventDefault()
+    setLoading(true)
+
+    try {
+      const response = await register({
+        name: signupForm.name,
+        email: signupForm.email,
+        password: signupForm.password,
+        role: signupForm.role,
+        adminKey: signupForm.role === 'admin' ? signupForm.adminKey : undefined,
+      })
+
+      toast.success(response.message || 'Account created successfully')
+      goToDashboard(response.user?.role || signupForm.role)
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Signup failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="grid min-h-[calc(100vh-180px)] items-center gap-8 lg:grid-cols-[0.82fr_1.18fr]">
       <section className="space-y-5">
         <span className="section-kicker">Account access</span>
-        <h1 className="max-w-xl text-4xl font-bold text-primary-strong sm:text-5xl">One card, two states.</h1>
+        <h1 className="max-w-xl text-4xl font-bold text-primary-strong sm:text-5xl">SignUp Your Account to Continue</h1>
         <p className="max-w-lg text-slate-600">
           Slide between login and sign up without leaving the page.
         </p>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="card-soft p-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Login</p>
-            <p className="mt-2 text-sm text-slate-600">For returning users.</p>
-          </div>
-          <div className="card-soft p-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">Sign up</p>
-            <p className="mt-2 text-sm text-slate-600">For new users.</p>
-          </div>
-        </div>
 
         <Link to="/" className="btn-secondary w-fit">
           Back to home
@@ -70,11 +112,25 @@ export default function AuthPage({ initialMode = 'login' }){
                   </div>
                 </div>
 
-                <form className="mt-6 space-y-4">
-                  <input className="input-field" placeholder="Email address" />
-                  <input className="input-field" type="password" placeholder="Password" />
-                  <button type="button" className="btn-primary w-full">
-                    Sign in <FiArrowRight />
+                <form className="mt-6 space-y-4" onSubmit={handleLoginSubmit}>
+                  <input
+                    className="input-field"
+                    type="email"
+                    placeholder="Email address"
+                    value={loginForm.email}
+                    onChange={(event) => setLoginForm((current) => ({ ...current, email: event.target.value }))}
+                    required
+                  />
+                  <input
+                    className="input-field"
+                    type="password"
+                    placeholder="Password"
+                    value={loginForm.password}
+                    onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
+                    required
+                  />
+                  <button type="submit" className="btn-primary w-full" disabled={loading}>
+                    {loading ? 'Signing in...' : <><span>Sign in</span><FiArrowRight /></>}
                   </button>
                 </form>
               </div>
@@ -90,12 +146,55 @@ export default function AuthPage({ initialMode = 'login' }){
                   </div>
                 </div>
 
-                <form className="mt-6 space-y-4">
-                  <input className="input-field" placeholder="Full name" />
-                  <input className="input-field" placeholder="Email address" />
-                  <input className="input-field" type="password" placeholder="Create password" />
-                  <button type="button" className="btn-primary w-full">
-                    Create account <FiArrowRight />
+                <form className="mt-6 space-y-4" onSubmit={handleSignupSubmit}>
+                  <input
+                    className="input-field"
+                    placeholder="Full name"
+                    value={signupForm.name}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, name: event.target.value }))}
+                    required
+                  />
+                  <input
+                    className="input-field"
+                    type="email"
+                    placeholder="Email address"
+                    value={signupForm.email}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, email: event.target.value }))}
+                    required
+                  />
+                  <input
+                    className="input-field"
+                    type="password"
+                    placeholder="Create password"
+                    value={signupForm.password}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, password: event.target.value }))}
+                    required
+                  />
+                  <select
+                    className="input-field"
+                    value={signupForm.role}
+                    onChange={(event) => setSignupForm((current) => ({ ...current, role: event.target.value }))}
+                  >
+                    <option value="user">User account</option>
+                    <option value="admin">Admin account</option>
+                  </select>
+                  {signupForm.role === 'admin' && (
+                    <div className="space-y-2">
+                      <input
+                        className="input-field"
+                        type="password"
+                        placeholder="Admin signup key"
+                        value={signupForm.adminKey}
+                        onChange={(event) => setSignupForm((current) => ({ ...current, adminKey: event.target.value }))}
+                        required
+                      />
+                      <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                        Admin signup requires the secure key configured on the server.
+                      </p>
+                    </div>
+                  )}
+                  <button type="submit" className="btn-primary w-full" disabled={loading}>
+                    {loading ? 'Creating account...' : <><span>Create account</span><FiArrowRight /></>}
                   </button>
                 </form>
               </div>

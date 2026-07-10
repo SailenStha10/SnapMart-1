@@ -11,8 +11,10 @@ import Cart from '../pages/Cart'
 import Wishlist from '../pages/Wishlist'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
+import Dashboard from '../pages/Dashboard'
 import Checkout from '../pages/Checkout'
 import NotFound from '../pages/NotFound'
+import ProtectedRoute from './ProtectedRoute'
 
 export default function AppRoutes(){
   return (
@@ -27,6 +29,12 @@ export default function AppRoutes(){
       <Route path="/wishlist" element={<MainLayout><Wishlist/></MainLayout>} />
       <Route path="/login" element={<MainLayout><Login/></MainLayout>} />
       <Route path="/register" element={<MainLayout><Register/></MainLayout>} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/dashboard" element={<MainLayout><Dashboard/></MainLayout>} />
+      </Route>
+      <Route element={<ProtectedRoute adminOnly />}>
+        <Route path="/admin/dashboard" element={<MainLayout><Dashboard/></MainLayout>} />
+      </Route>
       <Route path="/checkout" element={<MainLayout><Checkout/></MainLayout>} />
       <Route path="*" element={<MainLayout><NotFound/></MainLayout>} />
     </Routes>

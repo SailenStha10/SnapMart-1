@@ -31,9 +31,6 @@ export default function Contact(){
         <div className="relative mx-auto grid max-w-6xl gap-10 lg:min-h-[calc(100vh-14rem)] lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <div>
             <span className="section-kicker">Contact</span>
-            <h1 className="mt-6 max-w-2xl text-4xl font-bold leading-tight text-primary-strong sm:text-5xl">
-              A separate contact page with a clean scrolling layout.
-            </h1>
             <p className="mt-5 max-w-2xl text-base text-slate-600 sm:text-lg">
               The contact page stays independent, centered, and readable so the user can complete the journey without losing context.
             </p>

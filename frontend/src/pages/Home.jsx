@@ -55,9 +55,7 @@ export default function Home({ initialSection = 'hero' }){
           <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold leading-tight text-primary-strong sm:text-5xl lg:text-6xl">
             SnapMart built for a clean laptop-first experience.
           </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base text-slate-600 sm:text-lg">
-            One page, one flow, and a smoother scroll that introduces what the site offers without splitting the story across multiple screens.
-          </p>
+        
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link to="/login" className="btn-primary">
