@@ -1,6 +1,8 @@
 import Category from "../models/Category.js";
 import Product from "../models/Product.js";
 import slugify from "slugify";
+import { isDatabaseConnected } from "../../config/db.js";
+import { getFallbackCategories, getFallbackProducts } from "../utils/fallbackData.js";
 
 export const createCategory = async (req, res) => {
   const slug = slugify(req.body.name, { lower: true });
@@ -22,6 +24,16 @@ export const createCategory = async (req, res) => {
 };
 
 export const getCategories = async (req, res) => {
+  if (!isDatabaseConnected()) {
+    const categories = getFallbackCategories();
+    const products = getFallbackProducts();
+
+    return res.json(categories.map((category) => ({
+      ...category,
+      productCount: products.filter((product) => product.category_id === category._id).length,
+    })));
+  }
+
   const categories = await Category.find();
 
   const data = await Promise.all(
@@ -41,6 +53,17 @@ export const getCategories = async (req, res) => {
 };
 
 export const getCategoryBySlug = async (req, res) => {
+  if (!isDatabaseConnected()) {
+    const category = getFallbackCategories().find((item) => item.slug === req.params.slug);
+
+    if (!category) {
+      return res.status(404).json({ message: 'Category not found' });
+    }
+
+    const products = getFallbackProducts().filter((product) => product.category_id === category._id);
+    return res.json({ category, products });
+  }
+
   const category = await Category.findOne({
     slug: req.params.slug
   });

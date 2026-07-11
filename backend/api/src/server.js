@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import connectDB from '../config/db.js'
+import connectDB, { isDatabaseConnected } from '../config/db.js'
 import authRoutes from './routes/authRoutes.js'
 import productRoutes from './routes/productRoutes.js'
 import cartRoutes from './routes/cartRoutes.js'
@@ -22,7 +22,12 @@ app.use(express.json())
 app.use(authMiddleware)  // Set req.user globally (works for both auth and guest)
 
 // Connect to DB (config lives in ../config)
-connectDB()
+await connectDB()
+
+app.use((req, res, next) => {
+  req.isDatabaseAvailable = isDatabaseConnected()
+  next()
+})
 
 // Schedule cart cleanup for expired guest carts
 scheduleCartCleanup()

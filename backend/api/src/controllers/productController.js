@@ -1,6 +1,8 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import slugify from "slugify";
+import { isDatabaseConnected } from "../../config/db.js";
+import { getFallbackProducts, getFallbackCategories } from "../utils/fallbackData.js";
 
 export const createProduct = async (req, res) => {
 
@@ -31,6 +33,55 @@ export const createProduct = async (req, res) => {
 };
 
 export const getProducts = async (req, res) => {
+  if (!isDatabaseConnected()) {
+    const products = getFallbackProducts();
+    const { search, category, minPrice, maxPrice, sort, page = 1, limit = 12 } = req.query;
+
+    let filteredProducts = [...products];
+
+    if (search) {
+      const searchTerm = search.toLowerCase();
+      filteredProducts = filteredProducts.filter((product) =>
+        product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    if (category) {
+      filteredProducts = filteredProducts.filter((product) => product.category_id === category);
+    }
+
+    if (minPrice) {
+      filteredProducts = filteredProducts.filter((product) => product.price >= Number(minPrice));
+    }
+
+    if (maxPrice) {
+      filteredProducts = filteredProducts.filter((product) => product.price <= Number(maxPrice));
+    }
+
+    if (sort === 'price_asc') {
+      filteredProducts.sort((a, b) => a.price - b.price);
+    }
+
+    if (sort === 'price_desc') {
+      filteredProducts.sort((a, b) => b.price - a.price);
+    }
+
+    if (sort === 'newest') {
+      filteredProducts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    const pageNumber = Number(page);
+    const limitNumber = Number(limit);
+    const start = (pageNumber - 1) * limitNumber;
+    const end = start + limitNumber;
+
+    return res.json({
+      products: filteredProducts.slice(start, end),
+      total: filteredProducts.length,
+      page: pageNumber,
+      totalPages: Math.ceil(filteredProducts.length / limitNumber) || 1,
+    });
+  }
 
   let {
     search,
@@ -120,6 +171,14 @@ export const getProducts = async (req, res) => {
 };
 
 export const getProductBySlug = async (req, res) => {
+  if (!isDatabaseConnected()) {
+    const product = getFallbackProducts().find((item) => item.slug === req.params.slug);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    return res.json(product);
+  }
 
   const product = await Product.findOne({
     slug: req.params.slug,
