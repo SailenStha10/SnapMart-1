@@ -7,6 +7,9 @@ function buildProfile(user) {
     id: user._id,
     name: user.name,
     email: user.email,
+    phone: user.phone,
+    address: user.address,
+    city: user.city,
     role: user.role,
     created_at: user.createdAt
   }
@@ -34,7 +37,7 @@ export async function getProfile(req, res) {
 }
 
 export async function updateProfile(req, res) {
-  const { name, email } = req.body
+  const { name, email, phone, address, city } = req.body
   const user = await User.findById(req.user.id).select('+password')
 
   if (!user) {
@@ -57,6 +60,18 @@ export async function updateProfile(req, res) {
 
   if (name) {
     user.name = name.trim()
+  }
+
+  if (phone !== undefined) {
+    user.phone = String(phone).trim()
+  }
+
+  if (address !== undefined) {
+    user.address = String(address).trim()
+  }
+
+  if (city !== undefined) {
+    user.city = String(city).trim()
   }
 
   await user.save()

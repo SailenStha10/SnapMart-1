@@ -1,14 +1,33 @@
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
+import { isDatabaseConnected } from '../../config/db.js'
+import { getFallbackUser } from '../utils/fallbackData.js'
 
 export const authMiddleware = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '')
-    
+
+    if (!isDatabaseConnected()) {
+      if (token) {
+        req.user = {
+          id: getFallbackUser()._id,
+          email: getFallbackUser().email,
+          name: getFallbackUser().name,
+          isGuest: getFallbackUser().isGuest,
+          isAdmin: getFallbackUser().role === 'admin'
+        }
+        req.isAuthenticated = true
+      } else {
+        req.isAuthenticated = false
+      }
+
+      return next()
+    }
+
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key')
       const user = await User.findById(decoded.id)
-      
+
       if (user) {
         req.user = {
           id: user._id,
@@ -24,7 +43,7 @@ export const authMiddleware = async (req, res, next) => {
     } else {
       req.isAuthenticated = false
     }
-    
+
     next()
   } catch (error) {
     req.isAuthenticated = false

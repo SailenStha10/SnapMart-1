@@ -14,7 +14,17 @@ const readStoredUser = () => {
 }
 
 export function AuthProvider({ children }) {
+ scrum34
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || 'null')
+    } catch {
+      return null
+    }
+  })
+
   const [user, setUser] = useState(readStoredUser)
+ main
   const [token, setToken] = useState(localStorage.getItem('token') || null)
 
   const setSession = (userData, tokenData) => {
