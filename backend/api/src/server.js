@@ -21,6 +21,13 @@ app.use(cors())
 app.use(express.json())
 app.use(authMiddleware)  // Set req.user globally (works for both auth and guest)
 
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ message: 'Invalid JSON payload' })
+  }
+  next(err)
+})
+
 // Connect to DB (config lives in ../config)
 await connectDB()
 

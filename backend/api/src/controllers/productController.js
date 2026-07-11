@@ -47,7 +47,10 @@ export const getProducts = async (req, res) => {
     }
 
     if (category) {
-      filteredProducts = filteredProducts.filter((product) => product.category_id === category);
+      filteredProducts = filteredProducts.filter((product) => {
+        const categoryId = typeof product.category_id === 'string' ? product.category_id : product.category_id?._id;
+        return categoryId === category || product.categorySlug === category;
+      });
     }
 
     if (minPrice) {
