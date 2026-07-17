@@ -1,9 +1,4 @@
 import axios from 'axios'
-scrum34
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
-
 
 const AUTH_ENDPOINTS = ['/auth/login', '/auth/register']
 
@@ -14,7 +9,6 @@ const resolveBaseURL = () => {
 
 const api = axios.create({
   baseURL: resolveBaseURL(),
- main
 })
 
 api.interceptors.request.use((config) => {

@@ -1,7 +1,16 @@
-scrum34
 import React, { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FiFilter, FiSearch, FiArrowLeft, FiZap, FiTag, FiStar, FiChevronLeft, FiChevronRight, FiHeart } from 'react-icons/fi'
+import {
+  FiArrowLeft,
+  FiChevronLeft,
+  FiChevronRight,
+  FiFilter,
+  FiHeart,
+  FiSearch,
+  FiStar,
+  FiTag,
+  FiZap,
+} from 'react-icons/fi'
 import useCart from '../hooks/useCart'
 
 export default function Products() {
@@ -136,19 +145,22 @@ export default function Products() {
 
     if (searchTerm.trim()) {
       const query = searchTerm.toLowerCase()
-      result = result.filter((product) =>
-        product.name.toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query) ||
-        product.shop.toLowerCase().includes(query)
+      result = result.filter(
+        (product) =>
+          product.name.toLowerCase().includes(query) ||
+          product.category.toLowerCase().includes(query) ||
+          product.shop.toLowerCase().includes(query),
       )
     }
 
     if (inStock) {
       result = result.filter((product) => product.inStock)
     }
+
     if (inStorePickup) {
       result = result.filter((product) => product.inStorePickup)
     }
+
     if (sameDayDelivery) {
       result = result.filter((product) => product.sameDayDelivery)
     }
@@ -168,9 +180,20 @@ export default function Products() {
     }
 
     return result
-  }, [products, searchTerm, selectedCategory, selectedBrand, selectedPrice, selectedSort, inStock, inStorePickup, sameDayDelivery])
+  }, [
+    products,
+    searchTerm,
+    selectedCategory,
+    selectedBrand,
+    selectedPrice,
+    selectedSort,
+    inStock,
+    inStorePickup,
+    sameDayDelivery,
+  ])
 
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / productsPerPage))
+
   const pagedProducts = useMemo(() => {
     const validPage = Math.min(Math.max(currentPage, 1), pageCount)
     const start = (validPage - 1) * productsPerPage
@@ -194,9 +217,10 @@ export default function Products() {
     setSearchTerm(query)
   }, [searchParams])
 
-  const handleSearchChange = (e) => {
-    const nextValue = e.target.value
+  const handleSearchChange = (event) => {
+    const nextValue = event.target.value
     setSearchTerm(nextValue)
+
     if (nextValue.trim()) {
       setSearchParams({ search: nextValue })
     } else {
@@ -209,6 +233,7 @@ export default function Products() {
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
             className="flex items-center gap-2 rounded-lg border px-4 py-2 hover:bg-gray-50"
           >
@@ -218,20 +243,22 @@ export default function Products() {
 
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(event) => setSelectedCategory(event.target.value)}
             className="rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="All">Category</option>
-            {quickCategories.filter((option) => option !== 'All').map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            {quickCategories
+              .filter((option) => option !== 'All')
+              .map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
           </select>
 
           <select
             value={selectedSort}
-            onChange={(e) => setSelectedSort(e.target.value)}
+            onChange={(event) => setSelectedSort(event.target.value)}
             className="rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="Best rating">Best rating</option>
@@ -258,7 +285,9 @@ export default function Products() {
           <div className="sticky top-4 h-fit w-80 flex-shrink-0 rounded-lg bg-white p-6 shadow-md">
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FiArrowLeft className="cursor-pointer" onClick={() => setShowFilters(false)} />
+                <button type="button" onClick={() => setShowFilters(false)}>
+                  <FiArrowLeft className="cursor-pointer" />
+                </button>
                 <h2 className="text-lg font-semibold">Filters</h2>
               </div>
             </div>
@@ -288,7 +317,7 @@ export default function Products() {
                 <input
                   type="text"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(event) => setSearchTerm(event.target.value)}
                   placeholder="Try: 'toothpaste', 'lamp'"
                   className="w-full rounded-lg border py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
@@ -298,15 +327,16 @@ export default function Products() {
             <div className="mb-6">
               <h3 className="mb-3 font-medium">Quick Category</h3>
               <div className="flex flex-wrap gap-2">
-                {quickCategories.map((cat) => (
+                {quickCategories.map((category) => (
                   <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
+                    key={category}
+                    type="button"
+                    onClick={() => setSelectedCategory(category)}
                     className={`rounded-full px-3 py-1 text-sm ${
-                      selectedCategory === cat ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
+                      selectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
                     }`}
                   >
-                    {cat}
+                    {category}
                   </button>
                 ))}
               </div>
@@ -316,6 +346,7 @@ export default function Products() {
               <h3 className="mb-3 font-medium">Brand</h3>
               <div className="flex flex-wrap gap-2">
                 <button
+                  type="button"
                   onClick={() => setSelectedBrand('Any')}
                   className={`rounded-full px-3 py-1 text-sm ${
                     selectedBrand === 'Any' ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
@@ -326,6 +357,7 @@ export default function Products() {
                 {brands.map((brand) => (
                   <button
                     key={brand}
+                    type="button"
                     onClick={() => setSelectedBrand(brand)}
                     className={`rounded-full px-3 py-1 text-sm ${
                       selectedBrand === brand ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
@@ -341,6 +373,7 @@ export default function Products() {
               <h3 className="mb-3 font-medium">Price Range</h3>
               <div className="flex flex-wrap gap-2">
                 <button
+                  type="button"
                   onClick={() => setSelectedPrice('Any')}
                   className={`rounded-full px-3 py-1 text-sm ${
                     selectedPrice === 'Any' ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
@@ -351,6 +384,7 @@ export default function Products() {
                 {priceRanges.map((range) => (
                   <button
                     key={range}
+                    type="button"
                     onClick={() => setSelectedPrice(range)}
                     className={`rounded-full px-3 py-1 text-sm ${
                       selectedPrice === range ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
@@ -368,6 +402,7 @@ export default function Products() {
                 {sortOptions.map((option) => (
                   <button
                     key={option}
+                    type="button"
                     onClick={() => setSelectedSort(option)}
                     className={`rounded-full px-3 py-1 text-sm ${
                       selectedSort === option ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200'
@@ -384,21 +419,36 @@ export default function Products() {
               <div className="space-y-2">
                 <label className="flex cursor-pointer items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={inStock} onChange={(e) => setInStock(e.target.checked)} className="rounded" />
+                    <input
+                      type="checkbox"
+                      checked={inStock}
+                      onChange={(event) => setInStock(event.target.checked)}
+                      className="rounded"
+                    />
                     <span className="text-sm">In stock</span>
                   </div>
                   <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-800">Available</span>
                 </label>
                 <label className="flex cursor-pointer items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={inStorePickup} onChange={(e) => setInStorePickup(e.target.checked)} className="rounded" />
+                    <input
+                      type="checkbox"
+                      checked={inStorePickup}
+                      onChange={(event) => setInStorePickup(event.target.checked)}
+                      className="rounded"
+                    />
                     <span className="text-sm">In-store pickup</span>
                   </div>
                   <span className="rounded bg-blue-100 px-2 py-1 text-xs text-blue-800">Pickup</span>
                 </label>
                 <label className="flex cursor-pointer items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <input type="checkbox" checked={sameDayDelivery} onChange={(e) => setSameDayDelivery(e.target.checked)} className="rounded" />
+                    <input
+                      type="checkbox"
+                      checked={sameDayDelivery}
+                      onChange={(event) => setSameDayDelivery(event.target.checked)}
+                      className="rounded"
+                    />
                     <span className="text-sm">Same-day delivery</span>
                   </div>
                   <span className="rounded bg-orange-100 px-2 py-1 text-xs text-orange-800">Today</span>
@@ -407,13 +457,13 @@ export default function Products() {
             </div>
 
             <div className="space-y-3">
-              <button onClick={clearFilters} className="w-full rounded-lg border py-2 hover:bg-gray-50">
+              <button type="button" onClick={clearFilters} className="w-full rounded-lg border py-2 hover:bg-gray-50">
                 Clear all
               </button>
-              <button className="w-full rounded-lg border py-2 hover:bg-gray-50">
+              <button type="button" className="w-full rounded-lg border py-2 hover:bg-gray-50">
                 Save filter
               </button>
-              <button className="w-full rounded-lg bg-primary py-2 text-white hover:opacity-90">
+              <button type="button" className="w-full rounded-lg bg-primary py-2 text-white hover:opacity-90">
                 Show {filteredProducts.length} results
               </button>
             </div>
@@ -442,6 +492,7 @@ export default function Products() {
                   <div className="relative mb-3">
                     <img src={product.image} alt={product.name} className="h-40 w-full rounded-lg object-cover" />
                     <button
+                      type="button"
                       onClick={() => toggleWishlist(product)}
                       className={`absolute right-2 top-2 rounded-full bg-white p-2 shadow ${
                         isInWishlist(product.id) ? 'text-red-500' : 'text-gray-500'
@@ -462,6 +513,7 @@ export default function Products() {
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold">Rs: {product.price}</span>
                     <button
+                      type="button"
                       onClick={() => addToCart(product)}
                       className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:opacity-90"
                     >
@@ -474,10 +526,13 @@ export default function Products() {
           )}
 
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">Page {currentPage} of {pageCount}</span>
+            <span className="text-sm text-gray-600">
+              Page {currentPage} of {pageCount}
+            </span>
 
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
                 className="rounded-lg border p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -488,16 +543,16 @@ export default function Products() {
               {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
                 <button
                   key={page}
+                  type="button"
                   onClick={() => setCurrentPage(page)}
-                  className={`h-10 w-10 rounded-lg ${
-                    currentPage === page ? 'bg-primary text-white' : 'border hover:bg-gray-50'
-                  }`}
+                  className={`h-10 w-10 rounded-lg ${currentPage === page ? 'bg-primary text-white' : 'border hover:bg-gray-50'}`}
                 >
                   {page}
                 </button>
               ))}
 
               <button
+                type="button"
                 onClick={() => setCurrentPage((prev) => Math.min(prev + 1, pageCount))}
                 disabled={currentPage === pageCount}
                 className="rounded-lg border p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
@@ -507,7 +562,7 @@ export default function Products() {
 
               <select
                 value={currentPage}
-                onChange={(e) => setCurrentPage(Number(e.target.value))}
+                onChange={(event) => setCurrentPage(Number(event.target.value))}
                 className="ml-4 rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {Array.from({ length: pageCount }, (_, index) => (
@@ -523,89 +578,3 @@ export default function Products() {
     </div>
   )
 }
-  import React, { useEffect, useState } from 'react'
-  import { FiShoppingCart, FiStar } from 'react-icons/fi'
-  import api from '../services/api'
-
-  export default function Products(){
-    const [products, setProducts] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [message, setMessage] = useState('')
-
-    useEffect(() => {
-      let active = true
-
-      const loadProducts = async () => {
-        try {
-          const { data } = await api.get('/products')
-          if (active) {
-            setProducts(data.products || [])
-          }
-        } catch (error) {
-          if (active) {
-            setMessage(error.response?.data?.message || 'Unable to load products.')
-          }
-        } finally {
-          if (active) {
-            setLoading(false)
-          }
-        }
-      }
-
-      loadProducts()
-
-      return () => {
-        active = false
-      }
-    }, [])
-
-    const addToCart = async (productId) => {
-      try {
-        await api.post('/cart', { productId, quantity: 1 })
-        setMessage('Added to cart.')
-      } catch (error) {
-        setMessage(error.response?.data?.message || 'Unable to add item to cart.')
-      }
-    }
-
-    return (
-      <section className="space-y-6">
-        <div className="max-w-3xl space-y-3">
-          <span className="section-kicker">Customer dashboard</span>
-          <h1 className="text-4xl font-bold text-primary-strong sm:text-5xl">Products ready to buy.</h1>
-          <p className="text-slate-600">Browse live inventory from MongoDB, add items to your cart, and continue to checkout.</p>
-        </div>
-
-        {message ? <p className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700">{message}</p> : null}
-
-        {loading ? (
-          <div className="rounded-[1.5rem] border border-slate-200 bg-white/75 p-6 text-slate-600">Loading products...</div>
-        ) : (
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {products.map((product) => (
-              <article key={product.id} className="card-soft flex h-full flex-col overflow-hidden p-5">
-                <div className="mb-4 flex items-center justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl brand-gradient text-white shadow-lg shadow-blue-500/20">
-                    <FiStar />
-                  </div>
-                  <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-                    {product.stock > 0 ? `${product.stock} in stock` : 'Sold out'}
-                  </span>
-                </div>
-                <h2 className="text-xl font-bold text-primary-strong">{product.name}</h2>
-                <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">{product.description || 'A clean ecommerce product card linked to the database.'}</p>
-                <div className="mt-5 flex items-center justify-between gap-4">
-                  <span className="text-xl font-bold text-primary-strong">${Number(product.price || 0).toFixed(2)}</span>
-                  <button type="button" onClick={() => addToCart(product.id)} className="btn-primary text-sm" disabled={product.stock <= 0}>
-                    <FiShoppingCart />
-                    Buy now
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-    )
-  }
- main

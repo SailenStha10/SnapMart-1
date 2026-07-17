@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { FiCheck, FiTruck, FiShield } from 'react-icons/fi'
+import React, { useEffect, useState } from 'react'
+import { FiCheck, FiShield, FiTruck } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 
-export default function Checkout(){
+export default function Checkout() {
   const { user } = useAuth()
   const [formData, setFormData] = useState(() => ({
     fullName: user?.name || '',
@@ -12,123 +12,117 @@ export default function Checkout(){
     landmark: '',
     city: user?.city || '',
     zipCode: '',
-    saveAddress: false
+    saveAddress: false,
   }))
-
-  useEffect(() => {
-    if (user) {
-      setFormData((prev) => ({
-        ...prev,
-        fullName: user.name || '',
-        phone: user.phone || '',
-        email: user.email || '',
-        address: user.address || '',
-        city: user.city || ''
-      }))
-    }
-  }, [user])
-  
   const [deliveryOption, setDeliveryOption] = useState('instant')
   const [paymentMethod, setPaymentMethod] = useState('cod')
-  
-  const [cartItems] = useState([
-    { id: 1, name: 'Dabar Red Toothpaste 100g', quantity: 2, price: 200 }
-  ])
-  
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData(prev => ({
+  const [cartItems] = useState([{ id: 1, name: 'Dabar Red Toothpaste 100g', quantity: 2, price: 200 }])
+
+  useEffect(() => {
+    if (!user) {
+      return
+    }
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      fullName: user.name || '',
+      phone: user.phone || '',
+      email: user.email || '',
+      address: user.address || '',
+      city: user.city || '',
+    }))
+  }, [user])
+
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
     }))
   }
-  
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const deliveryFee = 0
   const discount = 0
   const total = subtotal + deliveryFee - discount
-  
+
   return (
- scrum34
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Checkout</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Form Sections */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Delivery Address */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Delivery Address</h2>
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <h1 className="mb-6 text-2xl font-bold">Checkout</h1>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-lg font-semibold">Delivery Address</h2>
             <form className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Full Name</label>
+                  <label className="mb-1 block text-sm font-medium">Full Name</label>
                   <input
                     type="text"
                     name="fullName"
                     value={formData.fullName}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Enter your full name"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Phone Number</label>
+                  <label className="mb-1 block text-sm font-medium">Phone Number</label>
                   <input
                     type="tel"
                     name="phone"
                     value={formData.phone}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Enter phone number"
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium mb-1">Email</label>
+                <label className="mb-1 block text-sm font-medium">Email</label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Enter email address"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium mb-1">Address</label>
+                <label className="mb-1 block text-sm font-medium">Address</label>
                 <input
                   type="text"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Enter your address"
                 />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Land Mark (Optional)</label>
+                  <label className="mb-1 block text-sm font-medium">Land Mark (Optional)</label>
                   <input
                     type="text"
                     name="landmark"
                     value={formData.landmark}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Nearby landmark"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">City</label>
+                  <label className="mb-1 block text-sm font-medium">City</label>
                   <select
                     name="city"
                     value={formData.city}
                     onChange={handleChange}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="">Select City</option>
                     <option value="kathmandu">Kathmandu</option>
@@ -138,19 +132,19 @@ export default function Checkout(){
                   </select>
                 </div>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium mb-1">Zip Code</label>
+                <label className="mb-1 block text-sm font-medium">Zip Code</label>
                 <input
                   type="text"
                   name="zipCode"
                   value={formData.zipCode}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-md border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Enter zip code"
                 />
               </div>
-              
+
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -159,113 +153,86 @@ export default function Checkout(){
                   onChange={handleChange}
                   className="mr-2"
                 />
-                <label className="text-sm">Save this address for Next time</label>
+                <label className="text-sm">Save this address for next time</label>
               </div>
-              
-              <button type="button" className="text-primary font-medium hover:underline">
+
+              <button type="button" className="font-medium text-primary hover:underline">
                 + Add New Address
               </button>
             </form>
           </div>
-          
-          {/* Delivery Option */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Delivery Option</h2>
+
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-lg font-semibold">Delivery Option</h2>
             <div className="space-y-3">
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
+              <label className="flex cursor-pointer items-center rounded-lg border p-4 hover:bg-gray-50">
                 <input
                   type="radio"
                   name="delivery"
                   value="instant"
                   checked={deliveryOption === 'instant'}
-                  onChange={(e) => setDeliveryOption(e.target.value)}
+                  onChange={(event) => setDeliveryOption(event.target.value)}
                   className="mr-3"
                 />
                 <div className="flex-1">
                   <div className="font-medium">Instant Delivery</div>
-                  <div className="text-sm text-gray-600">Get Your Order in 30 - 40 minutes</div>
+                  <div className="text-sm text-gray-600">Get your order in 30 - 40 minutes</div>
                 </div>
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Recommended</span>
+                <span className="rounded-full bg-green-100 px-2 py-1 text-xs text-green-800">Recommended</span>
                 <span className="ml-2 font-semibold text-green-600">Free</span>
               </label>
             </div>
           </div>
-          
-          {/* Payment Method */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
+
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-lg font-semibold">Payment Method</h2>
             <div className="space-y-3">
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="esewa"
-                  checked={paymentMethod === 'esewa'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="mr-3"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">eSewa</div>
-                  <div className="text-sm text-gray-600">Pay securely with eSewa</div>
-                </div>
-              </label>
-              
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="khalti"
-                  checked={paymentMethod === 'khalti'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="mr-3"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">Khalti</div>
-                  <div className="text-sm text-gray-600">Pay securely with Khalti</div>
-                </div>
-              </label>
-              
-              <label className="flex items-center p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="cod"
-                  checked={paymentMethod === 'cod'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="mr-3"
-                />
-                <div className="flex-1">
-                  <div className="font-medium">Cash On Delivery</div>
-                  <div className="text-sm text-gray-600">Pay when you receive your order</div>
-                </div>
-              </label>
+              {[
+                { value: 'esewa', label: 'eSewa', text: 'Pay securely with eSewa' },
+                { value: 'khalti', label: 'Khalti', text: 'Pay securely with Khalti' },
+                { value: 'cod', label: 'Cash On Delivery', text: 'Pay when you receive your order' },
+              ].map((option) => (
+                <label key={option.value} className="flex cursor-pointer items-center rounded-lg border p-4 hover:bg-gray-50">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value={option.value}
+                    checked={paymentMethod === option.value}
+                    onChange={(event) => setPaymentMethod(event.target.value)}
+                    className="mr-3"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium">{option.label}</div>
+                    <div className="text-sm text-gray-600">{option.text}</div>
+                  </div>
+                </label>
+              ))}
             </div>
           </div>
         </div>
-        
-        {/* Right Column - Order Summary */}
+
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-            <div className="flex justify-between items-center mb-4">
+          <div className="sticky top-4 rounded-lg bg-white p-6 shadow-md">
+            <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Order Summary</h2>
-              <button className="text-primary text-sm hover:underline">Edit Cart</button>
+              <button type="button" className="text-sm text-primary hover:underline">
+                Edit Cart
+              </button>
             </div>
-            
-            {/* Cart Items */}
-            <div className="space-y-3 mb-6">
-              {cartItems.map(item => (
-                <div key={item.id} className="flex justify-between items-start">
+
+            <div className="mb-6 space-y-3">
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="font-medium text-sm">{item.name}</div>
+                    <div className="text-sm font-medium">{item.name}</div>
                     <div className="text-xs text-gray-600">Qty: {item.quantity}</div>
                   </div>
                   <div className="font-semibold">Rs: {item.price * item.quantity}</div>
                 </div>
               ))}
             </div>
-            
-            {/* Price Breakdown */}
-            <div className="border-t pt-4 space-y-2">
+
+            <div className="space-y-2 border-t pt-4">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
                 <span>Rs: {subtotal}</span>
@@ -278,24 +245,22 @@ export default function Checkout(){
                 <span className="text-gray-600">Discount</span>
                 <span className="text-green-600">{discount === 0 ? 'Rs: 0' : `Rs: ${discount}`}</span>
               </div>
-              <div className="flex justify-between font-bold text-lg border-t pt-2">
+              <div className="flex justify-between border-t pt-2 text-lg font-bold">
                 <span>Total</span>
                 <span>Rs: {total}</span>
               </div>
             </div>
-            
-            {/* Place Order Button */}
-            <button className="w-full mt-6 bg-gradient-to-r from-primary to-primary-dark text-white py-3 rounded-lg font-semibold hover:opacity-90 transition">
+
+            <button type="button" className="mt-6 w-full rounded-lg bg-gradient-to-r from-primary to-primary-dark py-3 font-semibold text-white transition hover:opacity-90">
               Place Order
             </button>
-            
-            <div className="flex items-center justify-center mt-3 text-sm text-gray-600">
+
+            <div className="mt-3 flex items-center justify-center text-sm text-gray-600">
               <FiCheck className="mr-1" />
               <span>Secure and safe payment</span>
             </div>
-            
-            {/* Trust Badges */}
-            <div className="mt-6 pt-4 border-t grid grid-cols-2 gap-4">
+
+            <div className="mt-6 grid grid-cols-2 gap-4 border-t pt-4">
               <div className="flex items-center text-sm text-gray-600">
                 <FiShield className="mr-2 text-primary" />
                 <span>Safe Packaging</span>
@@ -309,27 +274,5 @@ export default function Checkout(){
         </div>
       </div>
     </div>
-
-    <section className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <span className="section-kicker">Checkout</span>
-        <h1 className="mt-3 text-4xl font-bold text-primary-strong">Finish your order</h1>
-      </div>
-
-      <div className="card-soft space-y-4 p-6">
-        <p className="text-slate-600">Shipping and payment capture can be added here next. The checkout screen is already protected and ready for cart data from MongoDB.</p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <input className="input-field" placeholder="Shipping name" />
-          <input className="input-field" placeholder="Phone number" />
-          <input className="input-field sm:col-span-2" placeholder="Delivery address" />
-          <input className="input-field" placeholder="Card number" />
-          <input className="input-field" placeholder="Expiry / CVV" />
-        </div>
-        <button type="button" className="btn-primary">
-          Place order
-        </button>
-      </div>
-    </section>
- main
   )
 }

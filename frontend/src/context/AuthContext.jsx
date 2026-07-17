@@ -14,24 +14,24 @@ const readStoredUser = () => {
 }
 
 export function AuthProvider({ children }) {
- scrum34
-  const [user, setUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('user') || 'null')
-    } catch {
-      return null
-    }
-  })
-
   const [user, setUser] = useState(readStoredUser)
- main
-  const [token, setToken] = useState(localStorage.getItem('token') || null)
+  const [token, setToken] = useState(() => localStorage.getItem('token') || null)
 
   const setSession = (userData, tokenData) => {
-    setUser(userData)
-    setToken(tokenData)
-    localStorage.setItem('user', JSON.stringify(userData))
-    localStorage.setItem('token', tokenData)
+    setUser(userData || null)
+    setToken(tokenData || null)
+
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData))
+    } else {
+      localStorage.removeItem('user')
+    }
+
+    if (tokenData) {
+      localStorage.setItem('token', tokenData)
+    } else {
+      localStorage.removeItem('token')
+    }
   }
 
   const register = async (payload) => {
@@ -47,10 +47,7 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    setUser(null)
-    setToken(null)
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
+    setSession(null, null)
   }
 
   const value = useMemo(

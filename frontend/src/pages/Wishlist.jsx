@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { FiHeart, FiShoppingCart, FiArrowUp, FiArrowDown } from 'react-icons/fi'
+import { FiArrowDown, FiArrowUp, FiHeart, FiShoppingCart } from 'react-icons/fi'
 import useCart from '../hooks/useCart'
 
 export default function Wishlist() {
@@ -20,6 +20,7 @@ export default function Wishlist() {
 
   const getSortedItems = () => {
     const items = [...wishlistItems]
+
     switch (sortBy) {
       case 'price-low':
         return items.sort((a, b) => a.price - b.price)
@@ -48,49 +49,50 @@ export default function Wishlist() {
   }
 
   return (
-scrum34
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="mb-1 text-2xl font-bold">My Wishlist</h1>
           <p className="text-sm text-gray-600">{wishlistItems.length} items</p>
         </div>
-        {wishlistItems.length > 0 && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleSort('newest')}
-              className={`rounded-lg px-4 py-2 text-sm ${
-                sortBy === 'newest' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
-              }`}
-            >
-              Newest
-            </button>
-            <button
-              onClick={() => handleSort('price-low')}
-              className={`flex items-center gap-1 rounded-lg px-4 py-2 text-sm ${
-                sortBy === 'price-low' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
-              }`}
-            >
-              <FiArrowUp /> Price
-            </button>
-            <button
-              onClick={() => handleSort('price-high')}
-              className={`flex items-center gap-1 rounded-lg px-4 py-2 text-sm ${
-                sortBy === 'price-high' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
-              }`}
-            >
-              <FiArrowDown /> Price
-            </button>
-            <button
-              onClick={() => handleSort('rating')}
-              className={`rounded-lg px-4 py-2 text-sm ${
-                sortBy === 'rating' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
-              }`}
-            >
-              Rating
-            </button>
-          </div>
-        )}
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => handleSort('newest')}
+            className={`rounded-lg px-4 py-2 text-sm ${
+              sortBy === 'newest' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
+            }`}
+          >
+            Newest
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSort('price-low')}
+            className={`flex items-center gap-1 rounded-lg px-4 py-2 text-sm ${
+              sortBy === 'price-low' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
+            }`}
+          >
+            <FiArrowUp /> Price
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSort('price-high')}
+            className={`flex items-center gap-1 rounded-lg px-4 py-2 text-sm ${
+              sortBy === 'price-high' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
+            }`}
+          >
+            <FiArrowDown /> Price
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSort('rating')}
+            className={`rounded-lg px-4 py-2 text-sm ${
+              sortBy === 'rating' ? 'bg-primary text-white' : 'border bg-white hover:bg-gray-50'
+            }`}
+          >
+            Rating
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -102,13 +104,14 @@ scrum34
                 <h2 className="font-semibold">{item.name}</h2>
                 <p className="text-sm text-gray-600">{item.shop}</p>
               </div>
-              <button onClick={() => toggleWishlist(item)} className="text-red-500">
+              <button type="button" onClick={() => toggleWishlist(item)} className="text-red-500">
                 <FiHeart />
               </button>
             </div>
             <div className="mt-3 flex items-center justify-between">
               <span className="font-semibold text-primary">Rs: {item.price}</span>
               <button
+                type="button"
                 onClick={() => addToCart(item)}
                 className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm text-white"
               >
@@ -120,16 +123,5 @@ scrum34
         ))}
       </div>
     </div>
-
-    <section className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <span className="section-kicker">Wishlist</span>
-        <h1 className="mt-3 text-4xl font-bold text-primary-strong">Saved for later</h1>
-      </div>
-      <div className="card-soft p-6">
-        <p className="text-slate-600">Wishlist support can be connected to the backend next. This screen now matches the new dashboard layout.</p>
-      </div>
-    </section>
- main
   )
 }
