@@ -1,130 +1,34 @@
- scrum34
-import React, { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { FiHeart, FiShoppingCart, FiSearch, FiChevronDown } from 'react-icons/fi'
+import React from 'react'
+import { Link, NavLink } from 'react-router-dom'
+import { FiArrowRight, FiHeart, FiLogOut, FiShoppingCart } from 'react-icons/fi'
 import useCart from '../../hooks/useCart'
 import { useAuth } from '../../context/AuthContext'
 
-export default function Navbar() {
-  const { cartCount, wishlistCount } = useCart()
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const [searchTerm, setSearchTerm] = useState('')
-
-  const handleSearchSubmit = (e) => {
-    e.preventDefault()
-    const trimmed = searchTerm.trim()
-    navigate(trimmed ? `/products?search=${encodeURIComponent(trimmed)}` : '/products')
-  }
-
-  const isActive = (path) => location.pathname === path
-
-  return (
-    <nav className="bg-white shadow-sm">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-        <Link to="/products" className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-white shadow-sm">
-            S
-          </div>
-          <div className="hidden min-w-[180px] flex-col sm:flex">
-            <span className="text-lg font-bold text-slate-900">SNAPMART</span>
-            <span className="text-sm text-slate-500">Customer Satisfaction</span>
-          </div>
-        </Link>
-
-     
-
-        <div className="flex items-center gap-3">
-          <Link
-            to="/products"
-            className={`hidden rounded-full px-4 py-2 text-sm font-medium transition sm:inline-flex ${isActive('/products') ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
-          >
-            Products
-          </Link>
-
-          {user?.role === 'admin' && (
-            <Link
-              to="/admin/dashboard"
-              className={`hidden rounded-full px-4 py-2 text-sm font-medium transition sm:inline-flex ${isActive('/admin/dashboard') ? 'bg-red-600 text-white' : 'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100'}`}
-            >
-              Admin
-            </Link>
-          )}
-
-          <Link
-            to="/wishlist"
-            className={`relative inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition ${isActive('/wishlist') ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
-          >
-            <FiHeart className="mr-2" />
-            Wishlist
-            {wishlistCount > 0 && (
-              <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold text-white">
-                {wishlistCount}
-              </span>
-            )}
-          </Link>
-
-          <Link
-            to="/cart"
-            className={`relative inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition ${isActive('/cart') ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
-          >
-            <FiShoppingCart className="mr-2" />
-            Cart
-            {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-white">
-                {cartCount}
-              </span>
-            )}
-          </Link>
-
-          <Link
-            to={user ? '/orders' : '/login'}
-            className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-medium transition ${isActive('/orders') ? 'bg-primary text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
-          >
-            Orders
-          </Link>
-
-          {user ? (
-            <div className="hidden sm:flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 shadow-sm">
-              <span className="font-medium">{user.name || user.email}</span>
-              <button onClick={logout} className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700 hover:bg-slate-200">
-                Logout
-              </button>
-            </div>
-          ) : (
-            <Link to="/login" className="hidden sm:inline-flex rounded-full bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-90">
-              Sign in
-            </Link>
-          )}
-
-import React from 'react'
-import { NavLink, Link } from 'react-router-dom'
-import { FiArrowRight, FiLogOut } from 'react-icons/fi'
-import { useAuth } from '../../context/AuthContext'
-
 const navItems = [
-  { to: '/', label: 'Home' },
+  { to: '/', label: 'Home', end: true },
   { to: '/about', label: 'About' },
   { to: '/services', label: 'Services' },
   { to: '/contact', label: 'Contact' },
 ]
 
-export default function Navbar(){
-  const { isAuthenticated, isAdmin, logout } = useAuth()
+export default function Navbar() {
+  const { cartCount, wishlistCount } = useCart()
+  const { user, isAuthenticated, isAdmin, logout } = useAuth()
 
   const dashboardLink = isAdmin ? '/admin/dashboard' : '/dashboard'
 
   return (
     <nav className="pointer-events-none sticky top-4 z-30 px-4 sm:top-5 sm:px-5 lg:top-6">
-      <div className="pointer-events-auto mx-auto flex w-full max-w-6xl flex-col gap-3 rounded-[1.5rem] border border-white/65 bg-white/72 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.10)] backdrop-blur-2xl sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+      <div className="pointer-events-auto mx-auto flex w-full max-w-7xl flex-col gap-3 rounded-[1.5rem] border border-white/65 bg-white/72 px-4 py-3 shadow-[0_14px_35px_rgba(15,23,42,0.10)] backdrop-blur-2xl sm:px-5 lg:flex-row lg:items-center lg:justify-between lg:px-6">
         <Link to="/" className="flex items-center gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl brand-gradient text-sm font-bold text-white shadow-lg shadow-blue-500/20">
             S
           </span>
           <span>
             <span className="block text-base font-bold leading-none text-primary-strong">SnapMart</span>
-            <span className="text-[0.67rem] font-medium uppercase tracking-[0.28em] text-slate-500">Fresh shopping, fast delivery</span>
+            <span className="text-[0.67rem] font-medium uppercase tracking-[0.28em] text-slate-500">
+              Fresh shopping, fast delivery
+            </span>
           </span>
         </Link>
 
@@ -133,19 +37,32 @@ export default function Navbar(){
             <NavLink
               key={item.to}
               to={item.to}
-              end={item.to === '/'}
-              className={({ isActive }) => `rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${isActive ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10' : 'text-slate-600 hover:bg-slate-100 hover:text-primary-strong'}`}
+              end={item.end}
+              className={({ isActive }) =>
+                `rounded-full px-3.5 py-1.5 text-sm font-semibold transition ${
+                  isActive
+                    ? 'bg-slate-900 text-white shadow-lg shadow-slate-900/10'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-primary-strong'
+                }`
+              }
             >
               {item.label}
             </NavLink>
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Link to="/wishlist" className="btn-secondary text-sm">
+            <FiHeart /> Wishlist{wishlistCount ? ` (${wishlistCount})` : ''}
+          </Link>
+          <Link to="/cart" className="btn-secondary text-sm">
+            <FiShoppingCart /> Cart{cartCount ? ` (${cartCount})` : ''}
+          </Link>
+
           {isAuthenticated ? (
             <>
               <Link to={dashboardLink} className="btn-secondary text-sm">
-                {isAdmin ? 'Admin dashboard' : 'My dashboard'}
+                {isAdmin ? 'Admin dashboard' : user?.name ? `${user.name.split(' ')[0]}'s dashboard` : 'My dashboard'}
               </Link>
               <button type="button" onClick={logout} className="btn-secondary text-sm">
                 Logout <FiLogOut />
@@ -156,10 +73,10 @@ export default function Navbar(){
               Login / Sign up
             </Link>
           )}
+
           <Link to="/products" className="btn-primary text-sm">
             Browse products <FiArrowRight />
           </Link>
-main
         </div>
       </div>
     </nav>

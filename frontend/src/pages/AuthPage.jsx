@@ -18,22 +18,35 @@ export default function AuthPage({ initialMode = 'login' }){
   const modeLabel = useMemo(() => (isLogin ? 'Login' : 'Sign up'), [isLogin])
 
   const redirectForRole = (role) => (role === 'admin' ? '/admin/dashboard' : '/dashboard')
+  const getAuthErrorMessage = (authError, fallbackMessage) => {
+    if (authError.response?.data?.message) {
+      return authError.response.data.message
+    }
+
+    if (authError.request) {
+      return 'Unable to reach the auth server. Please make sure the backend is running.'
+    }
+
+    return fallbackMessage
+  }
 
   const handleLoginSubmit = async (event) => {
     event.preventDefault()
     setLoading(true)
     setError('')
+    const email = loginForm.email.trim().toLowerCase()
+    const password = loginForm.password
 
     try {
       const response = await signIn({
-        email: loginForm.email,
-        password: loginForm.password,
+        email,
+        password,
       })
 
       toast.success(response.message || 'Signed in successfully')
       navigate(redirectForRole(response.user?.role), { replace: true })
     } catch (loginError) {
-      const message = loginError.response?.data?.message || 'Login failed'
+      const message = getAuthErrorMessage(loginError, 'Login failed')
       setError(message)
       toast.error(message)
     } finally {
@@ -45,11 +58,12 @@ export default function AuthPage({ initialMode = 'login' }){
     event.preventDefault()
     setLoading(true)
     setError('')
+    const email = signupForm.email.trim().toLowerCase()
 
     try {
       const response = await register({
-        name: signupForm.name,
-        email: signupForm.email,
+        name: signupForm.name.trim(),
+        email,
         password: signupForm.password,
         role: signupForm.role,
         adminKey: signupForm.role === 'admin' ? signupForm.adminKey : undefined,
@@ -58,7 +72,7 @@ export default function AuthPage({ initialMode = 'login' }){
       toast.success(response.message || 'Account created successfully')
       navigate(redirectForRole(response.user?.role || signupForm.role), { replace: true })
     } catch (signupError) {
-      const message = signupError.response?.data?.message || 'Signup failed'
+      const message = getAuthErrorMessage(signupError, 'Signup failed')
       setError(message)
       toast.error(message)
     } finally {
@@ -192,9 +206,7 @@ export default function AuthPage({ initialMode = 'login' }){
                         onChange={(event) => setSignupForm((current) => ({ ...current, adminKey: event.target.value }))}
                         required
                       />
-                      <p className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                        Use admin123 to create an admin account.
-                      </p>
+                      
                     </div>
                   )}
                   <button type="submit" className="btn-primary w-full" disabled={loading}>
@@ -206,9 +218,7 @@ export default function AuthPage({ initialMode = 'login' }){
           </div>
 
           {error ? <p className="mt-4 text-center text-sm font-medium text-red-500">{error}</p> : null}
-          <p className="mt-5 text-center text-sm text-slate-500">
-            Current view: <span className="font-semibold text-primary-strong">{modeLabel}</span>
-          </p>
+         
         </div>
       </section>
     </div>

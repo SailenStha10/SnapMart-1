@@ -1,4 +1,3 @@
-scrum34
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { FiMinus, FiPlus, FiTrash2 } from 'react-icons/fi'
@@ -28,7 +27,7 @@ export default function Cart() {
           <h1 className="text-2xl font-bold">Cart</h1>
           <p className="text-sm text-gray-600">{cartItems.length} item(s) ready for checkout</p>
         </div>
-        <button onClick={clearCart} className="text-sm text-red-500">
+        <button type="button" onClick={clearCart} className="text-sm text-red-500">
           Clear cart
         </button>
       </div>
@@ -45,6 +44,7 @@ export default function Cart() {
               </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => updateQuantity(item.id, item.quantity - 1)}
                   className="rounded-full border p-2"
                 >
@@ -52,13 +52,14 @@ export default function Cart() {
                 </button>
                 <span className="w-6 text-center">{item.quantity}</span>
                 <button
+                  type="button"
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   className="rounded-full border p-2"
                 >
                   <FiPlus />
                 </button>
               </div>
-              <button onClick={() => removeFromCart(item.id)} className="text-red-500">
+              <button type="button" onClick={() => removeFromCart(item.id)} className="text-red-500">
                 <FiTrash2 />
               </button>
             </div>
@@ -87,52 +88,5 @@ export default function Cart() {
         </div>
       </div>
     </div>
-
-import React, { useEffect, useState } from 'react'
-import api from '../services/api'
-
-export default function Cart(){
-  const [cart, setCart] = useState(null)
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    const loadCart = async () => {
-      try {
-        const { data } = await api.get('/cart')
-        setCart(data.cart)
-      } catch (error) {
-        setMessage(error.response?.data?.message || 'Unable to load cart.')
-      }
-    }
-
-    loadCart()
-  }, [])
-
-  return (
-    <section className="space-y-6">
-      <div>
-        <span className="section-kicker">Shopping cart</span>
-        <h1 className="mt-3 text-4xl font-bold text-primary-strong">Your selected items</h1>
-      </div>
-
-      {message ? <p className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm text-slate-700">{message}</p> : null}
-
-      <div className="card-soft space-y-4 p-6">
-        {cart?.items?.length ? (
-          cart.items.map((item) => (
-            <div key={String(item.productId)} className="flex items-center justify-between gap-4 border-b border-slate-200 pb-4 last:border-0 last:pb-0">
-              <div>
-                <p className="font-semibold text-primary-strong">{item.product?.name || 'Product'}</p>
-                <p className="text-sm text-slate-500">Quantity: {item.quantity}</p>
-              </div>
-              <p className="font-semibold text-primary-strong">${Number(item.product?.price || 0).toFixed(2)}</p>
-            </div>
-          ))
-        ) : (
-          <p className="text-slate-600">Your cart is empty.</p>
-        )}
-      </div>
-    </section>
- main
   )
 }
