@@ -222,20 +222,7 @@ export default function Dashboard() {
           <h1 className="mt-4 text-3xl font-bold text-primary-strong sm:text-4xl">
             Welcome back{user?.name ? `, ${user.name}` : ''}.
           </h1>
-          <p className="mt-3 max-w-2xl text-slate-600">
-            This area gives you a quick way back into shopping, checkout, and account activity.
-          </p>
-
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-500">Email</p>
-              <p className="mt-1 font-semibold text-primary-strong">{user?.email || 'Not available'}</p>
-            </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-sm font-semibold text-slate-500">Role</p>
-              <p className="mt-1 font-semibold uppercase tracking-wide text-primary-strong">{user?.role || 'user'}</p>
-            </div>
-          </div>
+        
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Link to="/products" className="btn-primary">
@@ -282,10 +269,7 @@ export default function Dashboard() {
             <h1 className="mt-4 text-3xl font-bold text-primary-strong sm:text-4xl">
               Welcome back{user?.name ? `, ${user.name}` : ''}.
             </h1>
-            <p className="mt-3 text-slate-600">
-              This is your private SnapMart control center for add product, product details, manage user orders,
-              payment checks, and delivered goods tracking.
-            </p>
+          
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -313,7 +297,7 @@ export default function Dashboard() {
                 <span className="section-kicker">Add product</span>
                 <h2 className="mt-4 text-2xl font-bold text-primary-strong">Create a new catalog item</h2>
                 <p className="mt-3 text-slate-600">
-                  Add products directly from your dashboard and publish them into the live catalog.
+                  
                 </p>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl brand-gradient text-white">
@@ -369,7 +353,7 @@ export default function Dashboard() {
                 <button type="submit" className="btn-primary" disabled={creatingProduct}>
                   {creatingProduct ? 'Creating product...' : 'Create product'} <FiArrowRight />
                 </button>
-                <p className="text-sm text-slate-500">Admin-only action protected by your account role.</p>
+                
               </div>
             </form>
           </section>
@@ -480,9 +464,7 @@ export default function Dashboard() {
                 <h2 className="mt-2 text-2xl font-bold text-primary-strong">Admin access enabled</h2>
               </div>
             </div>
-            <p className="mt-4 text-slate-600">
-              Use these shortcuts to jump between the core admin actions you asked for.
-            </p>
+            
 
             <div className="mt-5 space-y-3">
               {adminActions.map((action) => {
@@ -517,7 +499,7 @@ export default function Dashboard() {
                 <p className="mt-2 text-3xl font-bold text-primary-strong">{orderSummary.failedPayments}</p>
               </div>
               <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
-                Payments are summarized from the live order records exposed by the admin orders endpoint.
+           
               </div>
             </div>
           </section>
