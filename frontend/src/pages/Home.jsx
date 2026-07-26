@@ -70,7 +70,7 @@ export default function Home({ initialSection = 'hero' }) {
         <div className="relative mx-auto flex min-h-[calc(100vh-14rem)] max-w-4xl flex-col items-center justify-center text-center">
           <span className="section-kicker mx-auto">Fresh grocery commerce</span>
           <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold leading-tight text-primary-strong sm:text-5xl lg:text-6xl">
-            SnapMart built for a clean laptop-first experience.
+            SnapMart
           </h1>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">

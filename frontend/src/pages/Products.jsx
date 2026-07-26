@@ -11,7 +11,39 @@ import {
   FiTag,
   FiZap,
 } from 'react-icons/fi'
+import api from '../services/api'
 import useCart from '../hooks/useCart'
+
+const defaultProduct = {
+  shop: 'SnapMart',
+  rating: 0,
+  reviews: 0,
+  badge: '',
+  brand: 'SnapMart',
+  priceRange: '',
+  inStorePickup: true,
+  sameDayDelivery: true,
+}
+
+const mapProduct = (product) => ({
+  ...defaultProduct,
+  id: product.id,
+  name: product.name,
+  price: product.price,
+  category: 'Uncategorized',
+  image: product.images?.[0] || 'https://images.unsplash.com/photo-1567533804214-76ad02308147?auto=format&fit=crop&w=800&q=80',
+  inStock: product.stock > 0,
+  priceRange:
+    product.price < 25
+      ? 'Under $25'
+      : product.price <= 50
+        ? '$25-$50'
+        : product.price <= 100
+          ? '$50-$100'
+          : '$100+',
+  badge: product.stock === 0 ? 'Out of stock' : product.createdAt && Date.now() - new Date(product.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000 ? 'New arrival' : '',
+  createdAt: product.createdAt,
+})
 
 export default function Products() {
   const { addToCart, toggleWishlist, isInWishlist } = useCart()
@@ -27,105 +59,39 @@ export default function Products() {
   const [sameDayDelivery, setSameDayDelivery] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const productsPerPage = 2
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const [products] = useState([
-    {
-      id: 1,
-      name: 'Dabur RED Toothpaste',
-      shop: 'Shop 1',
-      rating: 4.87,
-      reviews: 9401,
-      price: 200,
-      badge: 'Best Seller',
-      category: 'Toothpaste',
-      brand: 'Brand1',
-      priceRange: 'Under $25',
-      image: 'https://images.unsplash.com/photo-1625772452859-1c03d5bf1137?auto=format&fit=crop&w=800&q=80',
-      inStock: true,
-      inStorePickup: true,
-      sameDayDelivery: true,
-    },
-    {
-      id: 2,
-      name: 'Sensodyne Toothpaste',
-      shop: 'Shop 2',
-      rating: 4.92,
-      reviews: 8234,
-      price: 250,
-      badge: 'New arrival',
-      category: 'Toothpaste',
-      brand: 'Brand2',
-      priceRange: '$25-$50',
-      image: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?auto=format&fit=crop&w=800&q=80',
-      inStock: true,
-      inStorePickup: false,
-      sameDayDelivery: true,
-    },
-    {
-      id: 3,
-      name: 'Colgate Toothpaste',
-      shop: 'Shop 1',
-      rating: 4.75,
-      reviews: 15678,
-      price: 180,
-      category: 'Toothpaste',
-      brand: 'Brand1',
-      priceRange: 'Under $25',
-      image: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=800&q=80',
-      inStock: false,
-      inStorePickup: true,
-      sameDayDelivery: false,
-    },
-    {
-      id: 4,
-      name: 'Wireless Headphones',
-      shop: 'Shop 3',
-      rating: 4.68,
-      reviews: 5432,
-      price: 150,
-      category: 'Electronics',
-      brand: 'Brand3',
-      priceRange: '$25-$50',
-      image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80',
-      inStock: true,
-      inStorePickup: true,
-      sameDayDelivery: true,
-    },
-    {
-      id: 5,
-      name: 'Coffee Maker',
-      shop: 'Shop 2',
-      rating: 4.82,
-      reviews: 7890,
-      price: 190,
-      category: 'Home & Kitchen',
-      brand: 'Brand2',
-      priceRange: '$25-$50',
-      image: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80',
-      inStock: true,
-      inStorePickup: false,
-      sameDayDelivery: true,
-    },
-    {
-      id: 6,
-      name: 'Smart Lamp',
-      shop: 'Shop 1',
-      rating: 4.95,
-      reviews: 12345,
-      price: 220,
-      category: 'Home & Kitchen',
-      brand: 'Brand3',
-      priceRange: '$25-$50',
-      image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=800&q=80',
-      inStock: true,
-      inStorePickup: true,
-      sameDayDelivery: false,
-    },
-  ])
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const { data } = await api.get('/products')
+        const fetched = (data.products || []).map(mapProduct)
+        setProducts(fetched)
+      } catch {
+        setProducts([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadProducts()
+  }, [])
 
-  const quickCategories = ['All', 'Toothpaste', 'Electronics', 'Home & Kitchen']
-  const brands = ['Brand1', 'Brand2', 'Brand3']
-  const priceRanges = ['Under $25', '$25-$50', '$50-$100']
+  const quickCategories = useMemo(() => {
+    const cats = new Set(products.map((p) => p.category).filter(Boolean))
+    return ['All', ...cats]
+  }, [products])
+
+  const brands = useMemo(() => {
+    const brs = new Set(products.map((p) => p.brand).filter(Boolean))
+    return ['Any', ...brs]
+  }, [products])
+
+  const priceRanges = useMemo(() => {
+    const ranges = new Set(products.map((p) => p.priceRange).filter(Boolean))
+    return ['Any', ...ranges]
+  }, [products])
+
   const sortOptions = ['Best rating', 'Lowest price', 'Newest', 'Most popular']
 
   const filteredProducts = useMemo(() => {
@@ -170,7 +136,7 @@ export default function Products() {
         result.sort((a, b) => a.price - b.price)
         break
       case 'Newest':
-        result.sort((a, b) => b.id - a.id)
+        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         break
       case 'Most popular':
         result.sort((a, b) => b.reviews - a.reviews)
@@ -476,7 +442,11 @@ export default function Products() {
             <p className="text-sm text-gray-600">Powered for your preferences</p>
           </div>
 
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+              <p className="text-gray-600">Loading products...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
             <div className="rounded-xl bg-white p-8 text-center shadow-sm">
               <p className="text-gray-600">No products match the current filters.</p>
             </div>
