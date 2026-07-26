@@ -1,33 +1,41 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import {
-  FiActivity,
   FiArrowRight,
-  FiCheckCircle,
-  FiCreditCard,
+  FiBarChart2,
+  FiChevronLeft,
+  FiChevronRight,
+  FiFolder,
+  FiGrid,
+  FiLock,
+  FiSearch,
   FiPackage,
-  FiPlusCircle,
   FiRefreshCw,
-  FiShield,
+  FiSave,
+  FiSettings,
   FiShoppingBag,
-  FiTruck,
+  FiShoppingCart,
+  FiShield,
+  FiStar,
+  FiTag,
+  FiTrash2,
+  FiTrendingUp,
   FiUsers,
 } from 'react-icons/fi'
 import { toast } from 'react-hot-toast'
 import { useAuth } from '../context/AuthContext'
-import { createAdminProduct, fetchAdminOrders, fetchAdminProducts } from '../services/admin'
+import api from '../services/api'
+import { createAdminProduct, fetchAdminOrders } from '../services/admin'
 
-const adminActions = [
-  { icon: FiPlusCircle, title: 'Add product', text: 'Create a new catalog item without leaving your dashboard.', href: '#add-product' },
-  { icon: FiPackage, title: 'Product details', text: 'Review live catalog inventory, pricing, and stock levels.', href: '#products' },
-  { icon: FiUsers, title: 'Manage user orders', text: 'Track recent orders and keep fulfillment moving.', href: '#orders' },
-  { icon: FiCreditCard, title: 'Check payments', text: 'Monitor paid, unpaid, and failed transactions quickly.', href: '#payments' },
-  { icon: FiTruck, title: 'Goods delivered', text: 'Review shipped and delivered goods at a glance.', href: '#deliveries' },
+const adminSidebar = [
+  { key: 'dashboard', label: 'Dashboard', icon: FiGrid },
+  { key: 'users', label: 'Users', icon: FiUsers },
+  { key: 'products', label: 'Products', icon: FiPackage },
+  { key: 'settings', label: 'Settings', icon: FiSettings },
 ]
 
-const userActions = [
-  { icon: FiShoppingBag, title: 'Browse products', text: 'Jump back into the catalog and add items to cart.', href: '/products' },
-  { icon: FiActivity, title: 'Check cart', text: 'Review your shopping list and move to checkout.', href: '/cart' },
+const userSidebar = [
+  { key: 'products', label: 'All Products', icon: FiShoppingBag },
 ]
 
 const defaultProductForm = {
@@ -38,14 +46,6 @@ const defaultProductForm = {
   imageUrl: '',
 }
 
-const emptyOrderSummary = {
-  totalOrders: 0,
-  paidPayments: 0,
-  failedPayments: 0,
-  deliveredOrders: 0,
-  activeDeliveries: 0,
-}
-
 const formatCurrency = (value) =>
   new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -53,148 +53,117 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 0,
   }).format(Number(value || 0))
 
-const formatDate = (value) => {
-  if (!value) {
-    return 'No date available'
+const formatNumber = (value) =>
+  new Intl.NumberFormat('en-US').format(Number(value || 0))
+
+const barColors = ['#1e3a5f', '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd', '#bfdbfe']
+
+function SimpleBarChart({ data, width = 500, height = 200 }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex h-48 items-center justify-center text-slate-400 text-sm">
+        No chart data available yet.
+      </div>
+    )
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  const maxVal = Math.max(...data.map((d) => d.value), 1)
+  const barWidth = Math.max(20, Math.min(60, (width - 40) / data.length - 10))
+  const chartHeight = height - 40
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+      <line x1="30" y1="10" x2="30" y2={chartHeight + 10} stroke="#e2e8f0" strokeWidth="1" />
+      <line x1="30" y1={chartHeight + 10} x2={width - 10} y2={chartHeight + 10} stroke="#e2e8f0" strokeWidth="1" />
+      {data.map((d, i) => {
+        const barH = Math.max(4, (d.value / maxVal) * chartHeight)
+        const x = 35 + i * (barWidth + 10)
+        const y = chartHeight + 10 - barH
+        const color = barColors[i % barColors.length]
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barWidth} height={barH} fill={color} rx="2" opacity="0.85" />
+            <text x={x + barWidth / 2} y={y - 5} textAnchor="middle" fontSize="10" fill="#64748b">
+              {d.label}
+            </text>
+            <text x={x + barWidth / 2} y={y - 16} textAnchor="middle" fontSize="9" fill="#94a3b8" fontWeight="600">
+              {d.value}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
 }
-
-const statusClasses = {
-  pending: 'bg-amber-100 text-amber-700',
-  processing: 'bg-blue-100 text-blue-700',
-  shipped: 'bg-indigo-100 text-indigo-700',
-  delivered: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-rose-100 text-rose-700',
-  failed: 'bg-rose-100 text-rose-700',
-  paid: 'bg-emerald-100 text-emerald-700',
-  unpaid: 'bg-slate-200 text-slate-700',
-}
-
-const getStatusClassName = (status) => statusClasses[status] || 'bg-slate-100 text-slate-700'
-
-const StatCard = ({ title, value, helper, icon: Icon }) => (
-  <article className="card-soft p-5">
-    <div className="flex items-start justify-between gap-3">
-      <div>
-        <p className="text-sm font-semibold text-slate-500">{title}</p>
-        <p className="mt-3 text-3xl font-bold text-primary-strong">{value}</p>
-        <p className="mt-2 text-sm text-slate-500">{helper}</p>
-      </div>
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white">
-        <Icon />
-      </div>
-    </div>
-  </article>
-)
 
 export default function Dashboard() {
   const { user, isAdmin } = useAuth()
-
-  const [productForm, setProductForm] = useState(defaultProductForm)
+  const [activeSection, setActiveSection] = useState('products')
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
-  const [orderSummary, setOrderSummary] = useState(emptyOrderSummary)
-  const [loadingAdminData, setLoadingAdminData] = useState(true)
-  const [refreshingAdminData, setRefreshingAdminData] = useState(false)
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [creatingProduct, setCreatingProduct] = useState(false)
+  const [productForm, setProductForm] = useState(defaultProductForm)
+  const [editingId, setEditingId] = useState(null)
+  const [settingsForm, setSettingsForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+    displayName: user?.name || '',
+    email: user?.email || '',
+    visibility: 'public',
+    dashboardRefresh: '30',
+    theme: 'light',
+  })
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [userSelectedCategory, setUserSelectedCategory] = useState('All')
+  const [userSelectedBrand, setUserSelectedBrand] = useState('Any')
+  const [userSelectedPrice, setUserSelectedPrice] = useState('Any')
+  const [userSelectedSort, setUserSelectedSort] = useState('Best rating')
+  const [userInStock, setUserInStock] = useState(false)
+  const [userInStorePickup, setUserInStorePickup] = useState(false)
+  const [userSameDayDelivery, setUserSameDayDelivery] = useState(false)
+  const [userCurrentPage, setUserCurrentPage] = useState(1)
+  const userProductsPerPage = 6
 
-  const loadAdminData = useCallback(async ({ silent = false } = {}) => {
-    if (!isAdmin) {
-      return
-    }
-
-    if (silent) {
-      setRefreshingAdminData(true)
-    } else {
-      setLoadingAdminData(true)
-    }
-
+  const loadAllData = useCallback(async () => {
+    setLoading(true)
     try {
-      const [nextProducts, orderResponse] = await Promise.all([
-        fetchAdminProducts(),
-        fetchAdminOrders(),
-      ])
-
-      setProducts(nextProducts)
-      setOrders(orderResponse.orders)
-      setOrderSummary(orderResponse.summary)
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Unable to load admin dashboard data')
+      const { data } = await api.get('/products')
+      setProducts(data.products || [])
+      if (isAdmin) {
+        const [orderResponse, usersResponse] = await Promise.all([
+          fetchAdminOrders(),
+          api.get('/users'),
+        ])
+        setOrders(orderResponse.orders || [])
+        setUsers(usersResponse.data.users || [])
+      }
+    } catch {
+      toast.error('Unable to load data')
     } finally {
-      setLoadingAdminData(false)
-      setRefreshingAdminData(false)
+      setLoading(false)
     }
   }, [isAdmin])
 
   useEffect(() => {
-    loadAdminData()
-  }, [loadAdminData])
+    loadAllData()
+  }, [loadAllData])
 
-  const adminStats = useMemo(
-    () => [
-      {
-        title: 'Product catalog',
-        value: products.length,
-        helper: 'Live products currently visible in your store.',
-        icon: FiPackage,
-      },
-      {
-        title: 'User orders',
-        value: orderSummary.totalOrders,
-        helper: 'Recent orders now visible from the admin route.',
-        icon: FiUsers,
-      },
-      {
-        title: 'Paid payments',
-        value: orderSummary.paidPayments,
-        helper: 'Transactions marked as paid.',
-        icon: FiCreditCard,
-      },
-      {
-        title: 'Goods delivered',
-        value: orderSummary.deliveredOrders,
-        helper: 'Orders already delivered successfully.',
-        icon: FiTruck,
-      },
-    ],
-    [orderSummary, products.length],
+  const productTotalValue = useMemo(
+    () => products.reduce((sum, p) => sum + (p.price || 0) * (p.stock || 0), 0),
+    [products],
   )
 
-  const deliveryStats = useMemo(
-    () => [
-      {
-        title: 'Processing',
-        value: orders.filter((order) => order.status === 'processing').length,
-      },
-      {
-        title: 'Shipped',
-        value: orders.filter((order) => order.status === 'shipped').length,
-      },
-      {
-        title: 'Delivered',
-        value: orders.filter((order) => order.status === 'delivered').length,
-      },
-    ],
+  const totalRevenue = useMemo(
+    () => orders.reduce((sum, o) => sum + (o.totalAmount || 0), 0),
     [orders],
   )
-
-  const handleProductFieldChange = (event) => {
-    const { name, value } = event.target
-    setProductForm((current) => ({
-      ...current,
-      [name]: value,
-    }))
-  }
 
   const handleCreateProduct = async (event) => {
     event.preventDefault()
     setCreatingProduct(true)
-
     try {
       await createAdminProduct({
         name: productForm.name,
@@ -203,10 +172,9 @@ export default function Dashboard() {
         stock: Number(productForm.stock || 0),
         images: productForm.imageUrl ? [productForm.imageUrl] : [],
       })
-
-      toast.success('Product created successfully')
+      toast.success('Product created')
       setProductForm(defaultProductForm)
-      loadAdminData({ silent: true })
+      loadAllData()
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to create product')
     } finally {
@@ -214,316 +182,734 @@ export default function Dashboard() {
     }
   }
 
+  const handleUpdateStock = async (productId, newStock) => {
+    try {
+      await api.put(`/products/${productId}`, { stock: Number(newStock) })
+      setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, stock: Number(newStock) } : p)))
+      toast.success('Stock updated')
+    } catch {
+      toast.error('Unable to update stock')
+    }
+  }
+
+  const handleUpdatePrice = async (productId, newPrice) => {
+    try {
+      await api.put(`/products/${productId}`, { price: Number(newPrice) })
+      setProducts((prev) => prev.map((p) => (p.id === productId ? { ...p, price: Number(newPrice) } : p)))
+      toast.success('Price updated')
+    } catch {
+      toast.error('Unable to update price')
+    }
+  }
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      await api.delete(`/products/${productId}`)
+      setProducts((prev) => prev.filter((p) => p.id !== productId))
+      toast.success('Product removed')
+    } catch {
+      toast.error('Unable to remove product')
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    try {
+      toast.success('Settings saved')
+    } catch {
+      toast.error('Unable to save settings')
+    }
+  }
+
+  const chartData = useMemo(() => {
+    const last6 = orders.slice(-6).reverse()
+    return last6.map((order) => ({
+      label: order.id?.slice(0, 8) || 'Order',
+      value: order.totalAmount || 0,
+    }))
+  }, [orders])
+
+  const salesByStatus = useMemo(() => {
+    const counts = {}
+    orders.forEach((o) => {
+      counts[o.status] = (counts[o.status] || 0) + 1
+    })
+    return counts
+  }, [orders])
+
   if (!isAdmin) {
+    const quickCategories = ['All', 'Toothpaste', 'Electronics', 'Home & Kitchen']
+    const brands = ['Any', 'Brand1', 'Brand2', 'Brand3']
+    const priceRanges = ['Any', 'Under $25', '$25-$50', '$50-$100']
+    const sortOptions = ['Best rating', 'Lowest price', 'Newest', 'Most popular']
+    const [searchParams] = useSearchParams()
+
+    const filteredProducts = useMemo(() => {
+      let result = [...products]
+      if (userSelectedCategory !== 'All') {
+        result = result.filter((product) => product.category === userSelectedCategory)
+      }
+      if (userSelectedBrand !== 'Any') {
+        result = result.filter((product) => product.brand === userSelectedBrand)
+      }
+      if (userSelectedPrice !== 'Any') {
+        result = result.filter((product) => product.priceRange === userSelectedPrice)
+      }
+      if (userSearchTerm.trim()) {
+        const query = userSearchTerm.toLowerCase()
+        result = result.filter(
+          (product) =>
+            product.name.toLowerCase().includes(query) ||
+            product.category.toLowerCase().includes(query) ||
+            (product.shop || '').toLowerCase().includes(query),
+        )
+      }
+      if (userInStock) {
+        result = result.filter((product) => product.inStock)
+      }
+      if (userInStorePickup) {
+        result = result.filter((product) => product.inStorePickup)
+      }
+      if (userSameDayDelivery) {
+        result = result.filter((product) => product.sameDayDelivery)
+      }
+      switch (userSelectedSort) {
+        case 'Lowest price':
+          result.sort((a, b) => a.price - b.price)
+          break
+        case 'Newest':
+          result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          break
+        case 'Most popular':
+          result.sort((a, b) => (b.reviews || 0) - (a.reviews || 0))
+          break
+        default:
+          result.sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      }
+      return result
+    }, [products, userSearchTerm, userSelectedCategory, userSelectedBrand, userSelectedPrice, userSelectedSort, userInStock, userInStorePickup, userSameDayDelivery])
+
+    const userPageCount = Math.max(1, Math.ceil(filteredProducts.length / userProductsPerPage))
+    const userPagedProducts = useMemo(() => {
+      const validPage = Math.min(Math.max(userCurrentPage, 1), userPageCount)
+      const start = (validPage - 1) * userProductsPerPage
+      return filteredProducts.slice(start, start + userProductsPerPage)
+    }, [filteredProducts, userCurrentPage, userPageCount])
+
+    const clearUserFilters = () => {
+      setUserSelectedCategory('All')
+      setUserSelectedBrand('Any')
+      setUserSelectedPrice('Any')
+      setUserSelectedSort('Best rating')
+      setUserSearchTerm('')
+      setUserInStock(false)
+      setUserInStorePickup(false)
+      setUserSameDayDelivery(false)
+      setUserCurrentPage(1)
+    }
+
     return (
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="card p-6 sm:p-8">
-          <span className="section-kicker">Your dashboard</span>
-          <h1 className="mt-4 text-3xl font-bold text-primary-strong sm:text-4xl">
-            Welcome back{user?.name ? `, ${user.name}` : ''}.
-          </h1>
-        
+      <div className="flex gap-6">
+        <aside className="absolute left-0 top-0 w-72 flex-shrink-0 overflow-y-auto max-h-[calc(100vh-200px)]">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="mb-4">
+              <h3 className="font-semibold text-primary-strong">Filters</h3>
+            </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/products" className="btn-primary">
-              Continue shopping <FiArrowRight />
-            </Link>
-            <Link to="/" className="btn-secondary">
-              Back to home
-            </Link>
-          </div>
-        </section>
+            <div className="mb-4">
+              <div className="relative">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  value={userSearchTerm}
+                  onChange={(e) => setUserSearchTerm(e.target.value)}
+                  placeholder="Search products"
+                  className="w-full rounded-lg border py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </div>
 
-        <aside className="space-y-4">
-          {userActions.map((action) => {
-            const Icon = action.icon
-            return (
-              <Link
-                key={action.title}
-                to={action.href}
-                className="card-soft block p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+            <div className="mb-4">
+              <h3 className="mb-2 font-medium text-sm">Quick Category</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {quickCategories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setUserSelectedCategory(category)}
+                    className={`rounded-full px-2.5 py-1 text-xs ${
+                      userSelectedCategory === category ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-slate-600'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="mb-2 font-medium text-sm">Brand</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {brands.map((brand) => (
+                  <button
+                    key={brand}
+                    type="button"
+                    onClick={() => setUserSelectedBrand(brand)}
+                    className={`rounded-full px-2.5 py-1 text-xs ${
+                      userSelectedBrand === brand ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-slate-600'
+                    }`}
+                  >
+                    {brand === 'Any' ? 'Any brand' : brand}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="mb-2 font-medium text-sm">Price Range</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {priceRanges.map((range) => (
+                  <button
+                    key={range}
+                    type="button"
+                    onClick={() => setUserSelectedPrice(range)}
+                    className={`rounded-full px-2.5 py-1 text-xs ${
+                      userSelectedPrice === range ? 'bg-primary text-white' : 'bg-gray-100 hover:bg-gray-200 text-slate-600'
+                    }`}
+                  >
+                    {range === 'Any' ? 'Any' : range}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="mb-2 font-medium text-sm">Sort by</h3>
+              <select
+                value={userSelectedSort}
+                onChange={(e) => setUserSelectedSort(e.target.value)}
+                className="w-full rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
-                    <Icon />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-primary-strong">{action.title}</h3>
-                    <p className="text-sm text-slate-600">{action.text}</p>
-                  </div>
-                </div>
-              </Link>
-            )
-          })}
+                {sortOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="mb-4">
+              <h3 className="mb-2 font-medium text-sm">Availability</h3>
+              <div className="space-y-2">
+                <label className="flex cursor-pointer items-center justify-between text-sm">
+                  <span>In stock</span>
+                  <input type="checkbox" checked={userInStock} onChange={(e) => setUserInStock(e.target.checked)} className="rounded" />
+                </label>
+                <label className="flex cursor-pointer items-center justify-between text-sm">
+                  <span>In-store pickup</span>
+                  <input type="checkbox" checked={userInStorePickup} onChange={(e) => setUserInStorePickup(e.target.checked)} className="rounded" />
+                </label>
+                <label className="flex cursor-pointer items-center justify-between text-sm">
+                  <span>Same-day delivery</span>
+                  <input type="checkbox" checked={userSameDayDelivery} onChange={(e) => setUserSameDayDelivery(e.target.checked)} className="rounded" />
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button type="button" onClick={clearUserFilters} className="w-full rounded-lg border py-1.5 text-sm hover:bg-gray-50">
+                Clear all
+              </button>
+              <button type="button" className="w-full rounded-lg bg-primary py-1.5 text-sm text-white hover:opacity-90">
+                Show {filteredProducts.length} results
+              </button>
+            </div>
+          </div>
         </aside>
+
+        <main className="ml-80 flex-1 space-y-6 pb-10">
+          <section>
+            <span className="section-kicker">Products</span>
+            <h1 className="mt-2 text-3xl font-bold text-primary-strong">Browse our catalog</h1>
+            <p className="mt-2 text-lg text-slate-600">Find the best products at great prices.</p>
+          </section>
+
+          {loading ? (
+            <p className="text-slate-500">Loading products...</p>
+          ) : filteredProducts.length === 0 ? (
+            <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+              <p className="text-gray-600">No products match the current filters.</p>
+            </div>
+          ) : (
+            <>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-primary-strong">All Products</h2>
+                <span className="text-sm text-slate-500">{filteredProducts.length} items</span>
+              </div>
+              <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {userPagedProducts.map((product) => (
+                  <div key={product.id} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+                    {product.badge && (
+                      <span className="mb-2 inline-block rounded-full bg-primary px-2 py-1 text-xs text-white">
+                        {product.badge}
+                      </span>
+                    )}
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-40 w-full rounded-lg object-cover mb-3"
+                    />
+                     <h3 className="mb-1 font-medium">{product.name}</h3>
+                     <p className="mb-2 text-sm text-gray-600">{product.shop || 'SnapMart'}</p>
+                     <div className="mb-3 flex items-center gap-2">
+                       <div className="flex items-center">
+                         <FiStar className="fill-current text-yellow-500" />
+                         <span className="ml-1 text-sm">{product.rating ?? 0}</span>
+                       </div>
+                       <span className="text-xs text-gray-400">({(product.reviews ?? 0).toLocaleString()})</span>
+                     </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg font-bold">Rs: {product.price}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          api.post('/cart', { productId: product.id, quantity: 1 }).then(() => {
+                            toast.success('Added to cart')
+                          }).catch(() => {
+                            toast.error('Unable to add to cart')
+                          })
+                        }}
+                        className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:opacity-90"
+                      >
+                        <FiShoppingCart className="inline mr-1" /> Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">
+                  Page {userCurrentPage} of {userPageCount}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUserCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={userCurrentPage === 1}
+                    className="rounded-lg border p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <FiChevronLeft />
+                  </button>
+                  {Array.from({ length: userPageCount }, (_, index) => index + 1).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setUserCurrentPage(page)}
+                      className={`h-10 w-10 rounded-lg ${userCurrentPage === page ? 'bg-primary text-white' : 'border hover:bg-gray-50'}`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setUserCurrentPage((prev) => Math.min(prev + 1, userPageCount))}
+                    disabled={userCurrentPage === userPageCount}
+                    className="rounded-lg border p-2 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <FiChevronRight />
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </main>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <section className="card overflow-hidden p-6 sm:p-8">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-3xl">
-            <span className="section-kicker">Admin dashboard</span>
-            <h1 className="mt-4 text-3xl font-bold text-primary-strong sm:text-4xl">
-              Welcome back{user?.name ? `, ${user.name}` : ''}.
-            </h1>
-          
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button type="button" className="btn-secondary" onClick={() => loadAdminData({ silent: true })} disabled={refreshingAdminData}>
-              {refreshingAdminData ? 'Refreshing...' : 'Refresh data'} <FiRefreshCw />
+    <div className="relative flex gap-6">
+      <aside className="absolute left-0 top-0 w-52 flex-shrink-0 space-y-1 overflow-y-auto max-h-[calc(100vh-200px)]">
+        {adminSidebar.map((item) => {
+          const Icon = item.icon
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={() => setActiveSection(item.key)}
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition ${
+                activeSection === item.key ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {item.label}
             </button>
-            <Link to="/products" className="btn-primary">
-              Open storefront <FiArrowRight />
-            </Link>
-          </div>
-        </div>
+          )
+        })}
+      </aside>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {adminStats.map((stat) => (
-            <StatCard key={stat.title} {...stat} />
-          ))}
-        </div>
-      </section>
-
-      <div className="grid gap-6 xl:grid-cols-[0.68fr_0.32fr]">
-        <div className="space-y-6">
-          <section id="add-product" className="card p-6 sm:p-8">
-            <div className="flex items-start justify-between gap-4">
+      <main className="ml-60 flex-1 space-y-8 pb-12">
+        {activeSection === 'dashboard' && (
+          <section className="space-y-6">
+            <div className="flex items-center justify-between">
               <div>
-                <span className="section-kicker">Add product</span>
-                <h2 className="mt-4 text-2xl font-bold text-primary-strong">Create a new catalog item</h2>
-                <p className="mt-3 text-slate-600">
-                  
-                </p>
+                <span className="section-kicker">Admin dashboard</span>
+                <h1 className="mt-2 text-3xl font-bold text-primary-strong sm:text-4xl">
+                  Welcome back{user?.name ? `, ${user.name}` : ''}.
+                </h1>
               </div>
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl brand-gradient text-white">
-                <FiPlusCircle />
+              <button type="button" className="text-sm text-slate-600 hover:text-primary" onClick={loadAllData}>
+                <FiRefreshCw className="inline mr-1" /> Refresh
+              </button>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="p-5">
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Products</p>
+                <p className="mt-2 text-4xl font-bold text-primary-strong">{products.length}</p>
+                <p className="mt-1 text-sm text-slate-500">Total catalog items</p>
+              </div>
+              <div className="p-5">
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Sales</p>
+                <p className="mt-2 text-4xl font-bold text-primary-strong">{formatNumber(orders.length)}</p>
+                <p className="mt-1 text-sm text-slate-500">All time orders</p>
+              </div>
+              <div className="p-5">
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Revenue</p>
+                <p className="mt-2 text-4xl font-bold text-primary-strong">{formatCurrency(totalRevenue)}</p>
+                <p className="mt-1 text-sm text-slate-500">Total sales value</p>
+              </div>
+              <div className="p-5">
+                <p className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Customers</p>
+                <p className="mt-2 text-4xl font-bold text-primary-strong">{formatNumber(users.length)}</p>
+                <p className="mt-1 text-sm text-slate-500">Registered users</p>
               </div>
             </div>
 
-            <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={handleCreateProduct}>
-              <input
-                className="input-field md:col-span-2"
-                name="name"
-                placeholder="Product name"
-                value={productForm.name}
-                onChange={handleProductFieldChange}
-                required
-              />
-              <textarea
-                className="input-field md:col-span-2 min-h-[132px] resize-y"
-                name="description"
-                placeholder="Description"
-                value={productForm.description}
-                onChange={handleProductFieldChange}
-              />
-              <input
-                className="input-field"
-                name="price"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="Price"
-                value={productForm.price}
-                onChange={handleProductFieldChange}
-                required
-              />
-              <input
-                className="input-field"
-                name="stock"
-                type="number"
-                min="0"
-                step="1"
-                placeholder="Stock"
-                value={productForm.stock}
-                onChange={handleProductFieldChange}
-              />
-              <input
-                className="input-field md:col-span-2"
-                name="imageUrl"
-                placeholder="Image URL"
-                value={productForm.imageUrl}
-                onChange={handleProductFieldChange}
-              />
-              <div className="md:col-span-2 flex flex-wrap items-center gap-3">
-                <button type="submit" className="btn-primary" disabled={creatingProduct}>
-                  {creatingProduct ? 'Creating product...' : 'Create product'} <FiArrowRight />
-                </button>
-                
+            <div className="grid gap-5 lg:grid-cols-[2fr_1fr]">
+              <div className="p-5">
+                <h3 className="text-lg font-bold text-primary-strong mb-3">Sales Overview</h3>
+                <SimpleBarChart data={chartData} width={600} height={220} />
               </div>
-            </form>
-          </section>
-
-          <section id="products" className="card p-6 sm:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <span className="section-kicker">Product details</span>
-                <h2 className="mt-4 text-2xl font-bold text-primary-strong">Live product overview</h2>
-              </div>
-              <p className="text-sm text-slate-500">{products.length} items</p>
-            </div>
-
-            {loadingAdminData ? (
-              <p className="mt-6 text-slate-500">Loading catalog data...</p>
-            ) : products.length ? (
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                {products.slice(0, 6).map((product) => (
-                  <article key={product.id} className="card-soft p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-primary-strong">{product.name}</h3>
-                        <p className="mt-2 text-sm text-slate-600 line-clamp-3">
-                          {product.description || 'No description added yet.'}
-                        </p>
+              <div className="p-5 space-y-3">
+                <h3 className="text-lg font-bold text-primary-strong mb-3">Orders by Status</h3>
+                {Object.entries(salesByStatus).map(([status, count]) => (
+                  <div key={status} className="flex items-center justify-between">
+                    <span className="capitalize text-slate-600">{status}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-32 rounded-full bg-slate-100">
+                        <div
+                          className="h-2 rounded-full bg-primary"
+                          style={{ width: `${Math.min(100, (count / Math.max(orders.length, 1)) * 100)}%` }}
+                        />
                       </div>
-                      <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                        Stock {product.stock ?? 0}
-                      </span>
+                      <span className="text-sm font-semibold text-primary-strong w-8 text-right">{count}</span>
                     </div>
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 text-sm text-slate-500">
-                      <span>{formatCurrency(product.price)}</span>
-                      <span>{product.slug || 'Slug pending'}</span>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-6 text-slate-500">No products found yet. Add your first product from the form above.</p>
-            )}
-          </section>
-
-          <section id="orders" className="card p-6 sm:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <span className="section-kicker">Manage user orders</span>
-                <h2 className="mt-4 text-2xl font-bold text-primary-strong">Recent customer orders</h2>
-              </div>
-              <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
-                {orderSummary.totalOrders} total
-              </span>
-            </div>
-
-            {loadingAdminData ? (
-              <p className="mt-6 text-slate-500">Loading order activity...</p>
-            ) : orders.length ? (
-              <div className="mt-6 space-y-4">
-                {orders.slice(0, 6).map((order) => (
-                  <article key={order.id} className="card-soft p-5">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-primary-strong">{order.customerName}</h3>
-                        <p className="mt-1 text-sm text-slate-500">{order.customerEmail}</p>
-                        <p className="mt-2 text-sm text-slate-500">Order ID: {order.id}</p>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusClassName(order.status)}`}>
-                          {order.status}
-                        </span>
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusClassName(order.paymentStatus)}`}>
-                          {order.paymentStatus}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 sm:grid-cols-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Items</p>
-                        <p className="mt-1 font-semibold text-primary-strong">{order.itemCount}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total</p>
-                        <p className="mt-1 font-semibold text-primary-strong">{formatCurrency(order.totalAmount)}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Placed</p>
-                        <p className="mt-1 font-semibold text-primary-strong">{formatDate(order.createdAt)}</p>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-6 text-slate-500">No orders found yet. New customer checkouts will appear here.</p>
-            )}
-          </section>
-        </div>
-
-        <aside className="space-y-6">
-          <section className="card p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl brand-gradient text-white">
-                <FiShield />
-              </div>
-              <div>
-                <p className="section-kicker">Private area</p>
-                <h2 className="mt-2 text-2xl font-bold text-primary-strong">Admin access enabled</h2>
-              </div>
-            </div>
-            
-
-            <div className="mt-5 space-y-3">
-              {adminActions.map((action) => {
-                const Icon = action.icon
-                return (
-                  <a key={action.title} href={action.href} className="card-soft block p-4 transition hover:-translate-y-0.5 hover:shadow-lg">
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white">
-                        <Icon />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-semibold text-primary-strong">{action.title}</h3>
-                        <p className="mt-1 text-sm text-slate-600">{action.text}</p>
-                      </div>
-                    </div>
-                  </a>
-                )
-              })}
-            </div>
-          </section>
-
-          <section id="payments" className="card p-6">
-            <span className="section-kicker">Check payments</span>
-            <h2 className="mt-4 text-2xl font-bold text-primary-strong">Payment snapshot</h2>
-            <div className="mt-5 space-y-3">
-              <div className="card-soft p-4">
-                <p className="text-sm font-semibold text-slate-500">Paid payments</p>
-                <p className="mt-2 text-3xl font-bold text-primary-strong">{orderSummary.paidPayments}</p>
-              </div>
-              <div className="card-soft p-4">
-                <p className="text-sm font-semibold text-slate-500">Failed payments</p>
-                <p className="mt-2 text-3xl font-bold text-primary-strong">{orderSummary.failedPayments}</p>
-              </div>
-              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
-           
-              </div>
-            </div>
-          </section>
-
-          <section id="deliveries" className="card p-6">
-            <span className="section-kicker">Goods delivered</span>
-            <h2 className="mt-4 text-2xl font-bold text-primary-strong">Delivery flow</h2>
-            <div className="mt-5 grid gap-3">
-              {deliveryStats.map((stat) => (
-                <div key={stat.title} className="card-soft flex items-center justify-between p-4">
-                  <div>
-                    <p className="text-sm font-semibold text-slate-500">{stat.title}</p>
-                    <p className="mt-1 text-2xl font-bold text-primary-strong">{stat.value}</p>
                   </div>
-                  <FiCheckCircle className="text-xl text-emerald-600" />
-                </div>
-              ))}
-              <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
-                Active deliveries in motion: {orderSummary.activeDeliveries}
+                ))}
+                {orders.length === 0 && <p className="text-sm text-slate-400">No orders yet.</p>}
               </div>
             </div>
+
+            <div className="p-5">
+              <h3 className="text-lg font-bold text-primary-strong mb-3">Inventory Value</h3>
+              <p className="text-3xl font-bold text-primary">{formatCurrency(productTotalValue)}</p>
+              <p className="text-sm text-slate-500 mt-1">Total value of all products in stock</p>
+            </div>
           </section>
-        </aside>
-      </div>
+        )}
+
+        {activeSection === 'users' && (
+          <section className="space-y-4">
+            <span className="section-kicker">Users</span>
+            <h1 className="text-3xl font-bold text-primary-strong">User management</h1>
+            {loading ? (
+              <p className="text-slate-500">Loading users...</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200">
+                      <th className="pb-3 font-semibold text-slate-500">User</th>
+                      <th className="pb-3 font-semibold text-slate-500">Email</th>
+                      <th className="pb-3 font-semibold text-slate-500">Role</th>
+                      <th className="pb-3 font-semibold text-slate-500">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="py-3 font-medium text-primary-strong">{u.name || 'N/A'}</td>
+                        <td className="py-3 text-slate-600">{u.email || 'N/A'}</td>
+                        <td className="py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                            {u.role || 'user'}
+                          </span>
+                        </td>
+                        <td className="py-3 text-slate-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {users.length === 0 && <p className="py-8 text-center text-slate-400">No users found.</p>}
+              </div>
+            )}
+          </section>
+        )}
+
+        {activeSection === 'products' && (
+          <section className="space-y-5">
+            <span className="section-kicker">Products</span>
+            <h1 className="text-3xl font-bold text-primary-strong">Product catalog</h1>
+
+            <div className="p-6 border border-slate-200">
+              <h2 className="text-xl font-bold text-primary-strong">Add new product</h2>
+              <form className="mt-4 grid gap-4 sm:grid-cols-2" onSubmit={handleCreateProduct}>
+                <input
+                  className="input-field sm:col-span-2"
+                  name="name"
+                  placeholder="Product name"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                />
+                <textarea
+                  className="input-field sm:col-span-2 resize-y min-h-[100px]"
+                  name="description"
+                  placeholder="Description"
+                  value={productForm.description}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, description: e.target.value }))}
+                />
+                <input
+                  className="input-field"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="Price"
+                  value={productForm.price}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, price: e.target.value }))}
+                  required
+                />
+                <input
+                  className="input-field"
+                  name="stock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Stock"
+                  value={productForm.stock}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, stock: e.target.value }))}
+                />
+                <input
+                  className="input-field sm:col-span-2"
+                  name="imageUrl"
+                  placeholder="Image URL"
+                  value={productForm.imageUrl}
+                  onChange={(e) => setProductForm((prev) => ({ ...prev, imageUrl: e.target.value }))}
+                />
+                <div className="sm:col-span-2">
+                  <button type="submit" className="btn-primary" disabled={creatingProduct}>
+                    {creatingProduct ? 'Creating...' : 'Create product'} <FiArrowRight className="inline ml-1" />
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div>
+              {loading ? (
+                <p className="text-slate-500">Loading products...</p>
+              ) : products.length ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-slate-200">
+                        <th className="pb-3 font-semibold text-slate-500">Product</th>
+                        <th className="pb-3 font-semibold text-slate-500 w-32">Price</th>
+                        <th className="pb-3 font-semibold text-slate-500 w-32">Stock</th>
+                        <th className="pb-3 font-semibold text-slate-500 w-24">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {products.map((product) => (
+                        <tr key={product.id} className="border-b border-slate-100 hover:bg-slate-50">
+                          <td className="py-3 font-medium text-primary-strong">{product.name}</td>
+                          <td className="py-3">
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={product.price}
+                              onChange={(e) => handleUpdatePrice(product.id, e.target.value)}
+                              className="w-24 rounded border border-slate-300 px-2 py-1.5 text-sm"
+                            />
+                          </td>
+                          <td className="py-3">
+                            <input
+                              type="number"
+                              step="1"
+                              min="0"
+                              value={product.stock ?? 0}
+                              onChange={(e) => handleUpdateStock(product.id, e.target.value)}
+                              className="w-24 rounded border border-slate-300 px-2 py-1.5 text-sm"
+                            />
+                          </td>
+                          <td className="py-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="text-red-500 hover:text-red-700 transition text-sm"
+                            >
+                              <FiTrash2 className="inline mr-1" /> Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="py-8 text-center text-slate-400">No products yet. Add your first product above.</p>
+              )}
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'settings' && (
+          <section className="space-y-6">
+            <span className="section-kicker">Settings</span>
+            <h1 className="text-3xl font-bold text-primary-strong">Admin settings</h1>
+
+            <div className="p-6 border border-slate-200 space-y-5">
+              <h2 className="text-xl font-bold text-primary-strong flex items-center gap-2">
+                <FiLock className="h-5 w-5" /> Account Info
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Display Name</label>
+                  <input
+                    className="input-field w-full"
+                    value={settingsForm.displayName}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, displayName: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Email</label>
+                  <input
+                    className="input-field w-full"
+                    type="email"
+                    value={settingsForm.email}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border border-slate-200 space-y-5">
+              <h2 className="text-xl font-bold text-primary-strong flex items-center gap-2">
+                <FiShield className="h-5 w-5" /> Password
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Current Password</label>
+                  <input
+                    className="input-field w-full"
+                    type="password"
+                    value={settingsForm.currentPassword}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">New Password</label>
+                  <input
+                    className="input-field w-full"
+                    type="password"
+                    value={settingsForm.newPassword}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Confirm New Password</label>
+                  <input
+                    className="input-field w-full"
+                    type="password"
+                    value={settingsForm.confirmPassword}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border border-slate-200 space-y-5">
+              <h2 className="text-xl font-bold text-primary-strong">Visibility & Access</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Store Visibility</label>
+                  <select
+                    className="input-field w-full"
+                    value={settingsForm.visibility}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, visibility: e.target.value }))}
+                  >
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                    <option value="maintenance">Maintenance</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Admin Access Level</label>
+                  <select
+                    className="input-field w-full"
+                    value={settingsForm.visibility}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, visibility: e.target.value }))}
+                  >
+                    <option value="full">Full Access</option>
+                    <option value="limited">Limited Access</option>
+                    <option value="read-only">Read Only</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border border-slate-200 space-y-5">
+              <h2 className="text-xl font-bold text-primary-strong">Dashboard Settings</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Auto-refresh interval</label>
+                  <select
+                    className="input-field w-full"
+                    value={settingsForm.dashboardRefresh}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, dashboardRefresh: e.target.value }))}
+                  >
+                    <option value="0">Disabled</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="300">5 minutes</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">Theme</label>
+                  <select
+                    className="input-field w-full"
+                    value={settingsForm.theme}
+                    onChange={(e) => setSettingsForm((prev) => ({ ...prev, theme: e.target.value }))}
+                  >
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="system">System</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button type="button" className="btn-primary px-6 py-2.5 text-sm" onClick={handleSaveSettings}>
+                <FiSave className="inline mr-1" /> Save Settings
+              </button>
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   )
 }
