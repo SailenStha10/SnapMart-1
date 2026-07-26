@@ -9,18 +9,25 @@ const orderItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
+  orderId:         { type: String, unique: true },
   userId:          { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   items:           [orderItemSchema],
   totalAmount:     { type: Number, required: true },
   status:          { type: String, enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled', 'failed'], default: 'pending' },
   paymentMethod:   { type: String, enum: ['cod', 'esewa', 'khalti'], required: true },
   paymentStatus:   { type: String, enum: ['unpaid', 'paid', 'failed'], default: 'unpaid' },
+  deliveryOption:  { type: String, default: 'instant' },
+  subtotal:        { type: Number },
+  deliveryFee:     { type: Number, default: 0 },
+  discount:        { type: Number, default: 0 },
   shippingAddress: {
-    street:  { type: String, required: true },
-    city:    { type: String, required: true },
-    state:   { type: String },
-    zip:     { type: String },
-    country: { type: String, required: true },
+    fullName: { type: String, required: true },
+    phone:    { type: String, required: true },
+    email:    { type: String },
+    address:  { type: String, required: true },
+    landmark: { type: String },
+    city:     { type: String, required: true },
+    zipCode:  { type: String },
   },
 }, { timestamps: true });
 

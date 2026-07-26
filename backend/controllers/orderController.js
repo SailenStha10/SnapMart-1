@@ -47,27 +47,52 @@ const createSummary = (orders) =>
 
 exports.createOrder = async (req, res) => {
   try {
-    const { items = [], totalAmount, paymentMethod, shippingAddress, status, paymentStatus } = req.body
+    const { 
+      items = [], 
+      totalAmount, 
+      total, 
+      paymentMethod, 
+      shippingAddress, 
+      status = 'processing', 
+      paymentStatus = 'pending',
+      deliveryOption,
+      subtotal,
+      deliveryFee,
+      discount
+    } = req.body
 
-    if (!items.length || !shippingAddress || !paymentMethod || typeof totalAmount === 'undefined') {
+    // Use either totalAmount or total (frontend sends total)
+    const finalTotalAmount = totalAmount || total
+
+    if (!items.length || !shippingAddress || !paymentMethod || typeof finalTotalAmount === 'undefined') {
       return res.status(400).json({ message: 'Items, total amount, payment method, and shipping address are required.' })
     }
 
+    // Generate a custom order ID
+    const orderId = `#${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
     const order = await Order.create({
+      orderId,
       userId: req.user.id,
       items,
-      totalAmount,
+      totalAmount: finalTotalAmount,
       paymentMethod,
       shippingAddress,
       status,
       paymentStatus,
+      deliveryOption,
+      subtotal,
+      deliveryFee,
+      discount,
     })
 
     return res.status(201).json({
       message: 'Order created successfully',
+      orderId: order.orderId,
       order: formatOrder(order),
     })
   } catch (error) {
+    console.error('Order creation error:', error)
     return res.status(500).json({ message: 'Unable to create order', error: error.message })
   }
 }
