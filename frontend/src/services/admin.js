@@ -10,6 +10,11 @@ export async function createAdminProduct(payload) {
   return data.product
 }
 
+export async function updateAdminProduct(productId, payload) {
+  const { data } = await api.put(`/products/${productId}`, payload)
+  return data.product
+}
+
 export async function fetchAdminOrders() {
   const { data } = await api.get('/orders')
   return {
