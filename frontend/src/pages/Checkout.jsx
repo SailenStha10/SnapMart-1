@@ -1,9 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { FiCheck, FiShield, FiTruck } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
+import api from '../services/api'
+import useCart from '../hooks/useCart'
 
 export default function Checkout() {
   const { user } = useAuth()
+  const navigate = useNavigate()
+  const { clearCart, cartItems } = useCart()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [formData, setFormData] = useState(() => ({
     fullName: user?.name || '',
     phone: user?.phone || '',
@@ -16,7 +23,6 @@ export default function Checkout() {
   }))
   const [deliveryOption, setDeliveryOption] = useState('instant')
   const [paymentMethod, setPaymentMethod] = useState('cod')
-  const [cartItems] = useState([{ id: 1, name: 'Dabar Red Toothpaste 100g', quantity: 2, price: 200 }])
 
   useEffect(() => {
     if (!user) {
@@ -46,9 +52,85 @@ export default function Checkout() {
   const discount = 0
   const total = subtotal + deliveryFee - discount
 
+  const handlePlaceOrder = async () => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+
+    try {
+      const orderData = {
+        items: cartItems.map(item => ({
+          productId: item.id,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price
+        })),
+        shippingAddress: {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          email: formData.email,
+          address: formData.address,
+          landmark: formData.landmark,
+          city: formData.city,
+          zipCode: formData.zipCode
+        },
+        paymentMethod: paymentMethod,
+        deliveryOption: deliveryOption,
+        subtotal,
+        deliveryFee,
+        discount,
+        total
+      }
+
+      // Call API to create order
+      const response = await api.post('/orders', orderData)
+
+      // Prepare order confirmation data
+      const confirmationData = {
+        orderId: response.data.orderId || `#${Math.random().toString(36).substr(2, 9)}`,
+        date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
+        paymentMethod: paymentMethod === 'esewa' ? 'eSewa' : paymentMethod === 'khalti' ? 'Khalti' : 'Cash On Delivery',
+        totalAmount: total,
+        items: cartItems.map(item => ({
+          name: item.name,
+          weight: '100g',
+          qty: item.quantity,
+          price: item.price
+        })),
+        deliveryAddress: {
+          name: formData.fullName,
+          phone: formData.phone,
+          street: formData.address,
+          city: `${formData.city}, ${formData.zipCode}`
+        },
+        estimatedDeliveryTime: '30 - 45 Minutes'
+      }
+
+      // Clear cart after successful order
+      clearCart()
+
+      // Navigate to order confirmed page with data
+      navigate('/order-confirmed', { state: { orderData: confirmationData } })
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to place order. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">Checkout</h1>
+
+      {error && (
+        <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
@@ -251,8 +333,13 @@ export default function Checkout() {
               </div>
             </div>
 
-            <button type="button" className="mt-6 w-full rounded-lg bg-gradient-to-r from-primary to-primary-dark py-3 font-semibold text-white transition hover:opacity-90">
-              Place Order
+            <button
+              type="button"
+              onClick={handlePlaceOrder}
+              disabled={loading}
+              className="mt-6 w-full rounded-lg bg-gradient-to-r from-primary to-primary-dark py-3 font-semibold text-white transition hover:opacity-90 disabled:opacity-70"
+            >
+              {loading ? 'Placing Order...' : 'Place Order'}
             </button>
 
             <div className="mt-3 flex items-center justify-center text-sm text-gray-600">

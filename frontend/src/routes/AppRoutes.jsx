@@ -13,6 +13,7 @@ import ForgotPasswordSent from '../pages/ForgotPasswordSent'
 import ResetPassword from '../pages/ResetPassword'
 import ResetSuccess from '../pages/ResetSuccess'
 import Checkout from '../pages/Checkout'
+import OrderConfirmed from '../pages/OrderConfirmed'
 import Dashboard from '../pages/Dashboard'
 import NotFound from '../pages/NotFound'
 import ProtectedRoute from './ProtectedRoute'
@@ -35,6 +36,7 @@ export default function AppRoutes() {
       <Route path="/reset-password" element={<MainLayout><ResetPassword /></MainLayout>} />
       <Route path="/reset-success" element={<MainLayout><ResetSuccess /></MainLayout>} />
       <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
+      <Route path="/order-confirmed" element={<MainLayout><OrderConfirmed /></MainLayout>} />
 
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<MainLayout><Dashboard /></MainLayout>} />
