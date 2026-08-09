@@ -96,8 +96,9 @@ export const getProducts = async (req, res) => {
     limit = 12
   } = req.query;
 
+  // Treat documents without `is_deleted` field as not deleted as well
   let query = {
-    is_deleted: false
+    is_deleted: { $ne: true },
   };
 
   // SEARCH
@@ -185,7 +186,7 @@ export const getProductBySlug = async (req, res) => {
 
   const product = await Product.findOne({
     slug: req.params.slug,
-    is_deleted: false
+    is_deleted: { $ne: true },
   }).populate("category_id");
 
   if (!product) {
