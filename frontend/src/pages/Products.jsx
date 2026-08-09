@@ -27,12 +27,13 @@ const defaultProduct = {
 
 const mapProduct = (product) => ({
   ...defaultProduct,
-  id: product.id,
+  id: product.id || product._id,
   name: product.name,
   price: product.price,
+  stock: product.stock ?? product._stock ?? 0,
   category: 'Uncategorized',
   image: product.images?.[0] || 'https://images.unsplash.com/photo-1567533804214-76ad02308147?auto=format&fit=crop&w=800&q=80',
-  inStock: product.stock > 0,
+  inStock: (product.stock ?? product._stock ?? 0) > 0,
   priceRange:
     product.price < 25
       ? 'Under $25'
@@ -41,7 +42,7 @@ const mapProduct = (product) => ({
         : product.price <= 100
           ? '$50-$100'
           : '$100+',
-  badge: product.stock === 0 ? 'Out of stock' : product.createdAt && Date.now() - new Date(product.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000 ? 'New arrival' : '',
+  badge: (product.stock ?? product._stock ?? 0) === 0 ? 'Out of stock' : product.createdAt && Date.now() - new Date(product.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000 ? 'New arrival' : '',
   createdAt: product.createdAt,
 })
 
@@ -58,7 +59,7 @@ export default function Products() {
   const [inStorePickup, setInStorePickup] = useState(false)
   const [sameDayDelivery, setSameDayDelivery] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const productsPerPage = 2
+  const productsPerPage = 10
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -451,7 +452,7 @@ export default function Products() {
               <p className="text-gray-600">No products match the current filters.</p>
             </div>
           ) : (
-            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3">
               {pagedProducts.map((product) => (
                 <div key={product.id} className="rounded-lg bg-white p-4 shadow-md transition hover:shadow-lg">
                   {product.badge && (
@@ -482,13 +483,19 @@ export default function Products() {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold">Rs: {product.price}</span>
-                    <button
-                      type="button"
-                      onClick={() => addToCart(product)}
-                      className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:opacity-90"
-                    >
-                      Add to Cart
-                    </button>
+                    { (product.stock ?? 0) <= 0 ? (
+                      <button type="button" disabled className="rounded-lg bg-gray-200 px-4 py-2 text-sm text-gray-500">
+                        No stock available
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => addToCart(product)}
+                        className="rounded-lg bg-primary px-4 py-2 text-sm text-white hover:opacity-90"
+                      >
+                        Add to Cart
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
