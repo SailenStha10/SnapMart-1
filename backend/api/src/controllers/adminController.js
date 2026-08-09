@@ -53,7 +53,7 @@ export async function getStats(req, res) {
 
 export async function getSettings(req, res) {
   if (!isDatabaseConnected()) {
-    return res.json({ settings: { storeName: 'My Store', theme: 'light' } })
+    return res.json({ settings: { storeName: 'My Store', theme: 'light', visibility: 'public', adminAccessLevel: 'full', autoRefreshInterval: 30 } })
   }
 
   let settings = await Settings.findOne({})
@@ -69,6 +69,9 @@ export async function updateSettings(req, res) {
   const payload = {}
   if (req.body.storeName !== undefined) payload.storeName = String(req.body.storeName).trim()
   if (req.body.theme !== undefined) payload.theme = String(req.body.theme).trim()
+  if (req.body.visibility !== undefined) payload.visibility = String(req.body.visibility).trim()
+  if (req.body.adminAccessLevel !== undefined) payload.adminAccessLevel = String(req.body.adminAccessLevel).trim()
+  if (req.body.autoRefreshInterval !== undefined) payload.autoRefreshInterval = Number(req.body.autoRefreshInterval)
   if (!isDatabaseConnected()) {
     const merged = { storeName: payload.storeName || 'My Store', theme: payload.theme || 'light' }
     return res.json({ settings: merged })
