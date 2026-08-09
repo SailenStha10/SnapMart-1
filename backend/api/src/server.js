@@ -12,6 +12,7 @@ import { authMiddleware } from './middlewares/authMiddleware.js'
 import { scheduleCartCleanup } from './utils/cartCleanup.js'
 import userRoutes from './routes/userRoutes.js'
 import wishlistRoutes from './routes/wishlistRoutes.js'
+import adminRoutes from './routes/adminRoutes.js'
 
 dotenv.config()
 
@@ -47,6 +48,7 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/wishlist', wishlistRoutes)
+app.use('/api/admin', adminRoutes)
 
 // Error handling middleware
 app.use(errorHandler)
