@@ -12,7 +12,7 @@ import {
 import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
-import { createAdminProduct, fetchAdminOrders, fetchAdminProducts } from '../services/admin'
+import { createAdminProduct, fetchAdminOrders, fetchAdminProducts, fetchAdminUsers, fetchAdminStats, getAdminSettings, updateAdminSettings } from '../services/admin'
 
 const sidebarItems = [
   { key: 'dashboard', label: 'Dashboard', icon: FiGrid },
@@ -41,6 +41,9 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState('dashboard')
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
+  const [users, setUsers] = useState([])
+  const [stats, setStats] = useState({})
+  const [settings, setSettings] = useState(null)
   const [loadingAdminData, setLoadingAdminData] = useState(true)
   const [creatingProduct, setCreatingProduct] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
@@ -53,8 +56,16 @@ export default function Dashboard() {
         fetchAdminProducts(),
         fetchAdminOrders(),
       ])
+      const [nextUsers, nextStats, nextSettings] = await Promise.all([
+        fetchAdminUsers(),
+        fetchAdminStats(),
+        getAdminSettings(),
+      ])
       setProducts(nextProducts || [])
       setOrders(orderResponse?.orders || [])
+      setUsers(nextUsers || [])
+      setStats(nextStats || {})
+      setSettings(nextSettings || null)
     } catch {
       toast.error('Unable to load admin data')
     } finally {
@@ -118,6 +129,16 @@ export default function Dashboard() {
       toast.success('Product removed')
     } catch {
       toast.error('Unable to remove product')
+    }
+  }
+
+  const handleSaveSettings = async (payload) => {
+    try {
+      const updated = await updateAdminSettings(payload)
+      setSettings(updated)
+      toast.success('Settings updated')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Unable to update settings')
     }
   }
 
@@ -190,20 +211,20 @@ export default function Dashboard() {
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <div className="p-3">
+                <p className="text-sm font-semibold text-slate-500">Users</p>
+                <p className="mt-1 text-2xl font-bold text-primary-strong">{stats.usersCount ?? users.length}</p>
+              </div>
+              <div className="p-3">
                 <p className="text-sm font-semibold text-slate-500">Products</p>
-                <p className="mt-1 text-2xl font-bold text-primary-strong">{products.length}</p>
+                <p className="mt-1 text-2xl font-bold text-primary-strong">{stats.productsCount ?? products.length}</p>
               </div>
               <div className="p-3">
                 <p className="text-sm font-semibold text-slate-500">Orders</p>
-                <p className="mt-1 text-2xl font-bold text-primary-strong">{orderSummary.totalOrders}</p>
+                <p className="mt-1 text-2xl font-bold text-primary-strong">{stats.ordersCount ?? orderSummary.totalOrders}</p>
               </div>
               <div className="p-3">
-                <p className="text-sm font-semibold text-slate-500">Paid</p>
-                <p className="mt-1 text-2xl font-bold text-primary-strong">{orderSummary.paidPayments}</p>
-              </div>
-              <div className="p-3">
-                <p className="text-sm font-semibold text-slate-500">Delivered</p>
-                <p className="mt-1 text-2xl font-bold text-primary-strong">{orderSummary.deliveredOrders}</p>
+                <p className="text-sm font-semibold text-slate-500">Revenue</p>
+                <p className="mt-1 text-2xl font-bold text-primary-strong">{formatCurrency(stats.totalSales ?? 0)}</p>
               </div>
             </div>
           </section>
@@ -213,7 +234,36 @@ export default function Dashboard() {
           <section>
             <span className="section-kicker">Users</span>
             <h1 className="mt-2 text-2xl font-bold text-primary-strong">User management</h1>
-            <p className="mt-3 text-slate-600">User listing and management will appear here.</p>
+            <p className="mt-3 text-slate-600">List of registered users.</p>
+
+            <div className="mt-4">
+              {loadingAdminData ? (
+                <p className="text-slate-500">Loading users...</p>
+              ) : users.length ? (
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200">
+                      <th className="pb-2 font-medium text-slate-500">Name</th>
+                      <th className="pb-2 font-medium text-slate-500">Email</th>
+                      <th className="pb-2 font-medium text-slate-500">Role</th>
+                      <th className="pb-2 font-medium text-slate-500">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((u) => (
+                      <tr key={u.id} className="border-b border-slate-100">
+                        <td className="py-2 font-medium text-primary-strong">{u.name || '-'}</td>
+                        <td className="py-2">{u.email}</td>
+                        <td className="py-2">{u.role || 'user'}</td>
+                        <td className="py-2">{new Date(u.created_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-slate-500">No users found.</p>
+              )}
+            </div>
           </section>
         )}
 
@@ -337,7 +387,51 @@ export default function Dashboard() {
           <section>
             <span className="section-kicker">Settings</span>
             <h1 className="mt-2 text-2xl font-bold text-primary-strong">Settings</h1>
-            <p className="mt-3 text-slate-600">Settings panel will appear here.</p>
+            <p className="mt-3 text-slate-600">Update store settings and admin password.</p>
+
+            <div className="mt-4 grid gap-6 sm:grid-cols-2">
+              <div className="card-soft p-4">
+                <h2 className="font-semibold">Store settings</h2>
+                <div className="mt-3 grid gap-3">
+                  <input className="input-field" placeholder="Store name" value={settings?.storeName || ''} onChange={(e)=>setSettings((s)=>({...(s||{}),storeName:e.target.value}))} />
+                  <label className="text-sm text-slate-600">Theme</label>
+                  <select className="input-field w-48" value={settings?.theme || 'light'} onChange={(e)=>setSettings((s)=>({...(s||{}),theme:e.target.value}))}>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                  </select>
+                  <div>
+                    <button className="btn-primary" onClick={()=>handleSaveSettings({storeName: settings?.storeName, theme: settings?.theme})}>Save settings</button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card-soft p-4">
+                <h2 className="font-semibold">Change admin password</h2>
+                <form className="mt-3 grid gap-3" onSubmit={async (e)=>{
+                  e.preventDefault()
+                  const fd = new FormData(e.target)
+                  const payload = {
+                    currentPassword: fd.get('currentPassword'),
+                    newPassword: fd.get('newPassword'),
+                    confirmNewPassword: fd.get('confirmNewPassword')
+                  }
+                  try {
+                    await api.put('/user/change-password', payload)
+                    toast.success('Password updated')
+                    e.target.reset()
+                  } catch (err) {
+                    toast.error(err.response?.data?.message || 'Unable to update password')
+                  }
+                }}>
+                  <input name="currentPassword" type="password" className="input-field" placeholder="Current password" required />
+                  <input name="newPassword" type="password" className="input-field" placeholder="New password" required />
+                  <input name="confirmNewPassword" type="password" className="input-field" placeholder="Confirm new password" required />
+                  <div>
+                    <button className="btn-primary" type="submit">Change password</button>
+                  </div>
+                </form>
+              </div>
+            </div>
           </section>
         )}
       </main>

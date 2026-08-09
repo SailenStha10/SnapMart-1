@@ -28,3 +28,23 @@ export async function fetchAdminOrders() {
     },
   }
 }
+
+export async function fetchAdminUsers() {
+  const { data } = await api.get('/admin/users')
+  return data.users || []
+}
+
+export async function fetchAdminStats() {
+  const { data } = await api.get('/admin/stats')
+  return data || {}
+}
+
+export async function getAdminSettings() {
+  const { data } = await api.get('/admin/settings')
+  return data.settings || null
+}
+
+export async function updateAdminSettings(payload) {
+  const { data } = await api.put('/admin/settings', payload)
+  return data.settings || null
+}
