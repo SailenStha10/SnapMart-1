@@ -55,6 +55,7 @@ export default function Cart() {
                   type="button"
                   onClick={() => updateQuantity(item.id, item.quantity + 1)}
                   className="rounded-full border p-2"
+                  disabled={Number(item.stock ?? item._stock ?? 0) > 0 ? item.quantity >= Number(item.stock ?? item._stock ?? 0) : false}
                 >
                   <FiPlus />
                 </button>

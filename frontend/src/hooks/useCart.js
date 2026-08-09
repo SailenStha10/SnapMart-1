@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-hot-toast'
 
 const CartContext = createContext()
 
@@ -30,12 +31,20 @@ export function CartProvider({ children }) {
   }, [wishlistItems])
 
   const addToCart = (product) => {
+    const available = Number(product.stock ?? product._stock ?? 0)
+    if (available <= 0) {
+      toast.error('No stock available')
+      return
+    }
+
     setCartItems((prev) => {
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
-        return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
+        if ((existing.quantity + 1) > available) {
+          toast.error('No more stock available')
+          return prev
+        }
+        return prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
       }
       return [...prev, { ...product, quantity: 1 }]
     })
@@ -47,8 +56,15 @@ export function CartProvider({ children }) {
 
   const updateQuantity = (id, quantity) => {
     setCartItems((prev) => {
+      const found = prev.find((item) => item.id === id)
+      if (!found) return prev
+      const available = Number(found.stock ?? found._stock ?? 0)
       if (quantity <= 0) {
         return prev.filter((item) => item.id !== id)
+      }
+      if (available > 0 && quantity > available) {
+        toast.error('Requested quantity exceeds available stock')
+        return prev
       }
       return prev.map((item) => (item.id === id ? { ...item, quantity } : item))
     })

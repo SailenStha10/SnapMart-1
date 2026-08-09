@@ -42,12 +42,7 @@ const defaultProductForm = {
   imageUrl: '',
 }
 
-const formatCurrency = (value) =>
-  new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(Number(value || 0))
+const formatCurrency = (value) => `Rs: ${new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value || 0))}`
 
 export default function Dashboard() {
   const { user, isAdmin } = useAuth()
@@ -137,11 +132,12 @@ export default function Dashboard() {
 
   const handleDeleteProduct = async (productId) => {
     try {
-      await fetch(`/api/products/${productId}`, { method: 'DELETE' })
-      setProducts((prev) => prev.filter((p) => p.id !== productId))
+      await api.delete(`/products/${productId}`)
       toast.success('Product removed')
-    } catch {
-      toast.error('Unable to remove product')
+      // reload admin data to keep counts/stats in sync
+      loadAdminData()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Unable to remove product')
     }
   }
 

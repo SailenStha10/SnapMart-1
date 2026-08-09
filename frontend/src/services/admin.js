@@ -2,7 +2,9 @@ import api from './api'
 
 export async function fetchAdminProducts() {
   const { data } = await api.get('/products')
-  return data.products || []
+  const products = data.products || []
+  // normalize id field to `id` for frontend consistency
+  return products.map((p) => ({ ...p, id: p._id || p.id }))
 }
 
 export async function createAdminProduct(payload) {

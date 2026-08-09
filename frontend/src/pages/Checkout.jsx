@@ -91,7 +91,7 @@ export default function Checkout() {
 
       // Prepare order confirmation data
       const confirmationData = {
-        orderId: response.data.orderId || `#${Math.random().toString(36).substr(2, 9)}`,
+        orderId: response.data.orderCode || response.data.orderId || `#${Math.random().toString(36).substr(2, 5)}`,
         date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }),
         paymentMethod: paymentMethod === 'esewa' ? 'eSewa' : paymentMethod === 'khalti' ? 'Khalti' : 'Cash On Delivery',
         totalAmount: total,
