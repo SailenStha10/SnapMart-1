@@ -13,6 +13,19 @@ import { toast } from 'react-hot-toast'
 import api from '../services/api'
 import { useAuth } from '../context/AuthContext'
 import { createAdminProduct, fetchAdminOrders, fetchAdminProducts, fetchAdminUsers, fetchAdminStats, getAdminSettings, updateAdminSettings } from '../services/admin'
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts'
 
 const sidebarItems = [
   { key: 'dashboard', label: 'Dashboard', icon: FiGrid },
@@ -171,6 +184,47 @@ export default function Dashboard() {
     activeDeliveries: 0,
   }
 
+  // build chart datasets
+  const getLastNDays = (n = 7) => {
+    const arr = []
+    for (let i = n - 1; i >= 0; i -= 1) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      arr.push(d)
+    }
+    return arr
+  }
+
+  const salesData = React.useMemo(() => {
+    const days = getLastNDays(7).map((d) => ({ date: d.toISOString().slice(0, 10), revenue: 0, orders: 0 }))
+    const map = Object.fromEntries(days.map((d) => [d.date, d]))
+    orders.forEach((o) => {
+      const key = new Date(o.createdAt || o.created_at || o.created_at || o.created_at).toISOString().slice(0, 10)
+      if (!map[key]) return
+      map[key].revenue += Number(o.total || o.total_amount || 0)
+      map[key].orders += 1
+    })
+    return Object.values(map)
+  }, [orders])
+
+  const productStockData = React.useMemo(() => {
+    const inStock = products.filter((p) => (p.stock ?? 0) > 0).length
+    const outStock = products.length - inStock
+    return [
+      { name: 'In stock', value: inStock },
+      { name: 'Out of stock', value: outStock },
+    ]
+  }, [products])
+
+  const usersByRole = React.useMemo(() => {
+    const adminCount = users.filter((u) => u.role === 'admin').length
+    const userCount = users.length - adminCount
+    return [
+      { name: 'Users', value: userCount },
+      { name: 'Admins', value: adminCount },
+    ]
+  }, [users])
+
   return (
     <div className="flex gap-6">
       <aside className="w-52 flex-shrink-0 space-y-1">
@@ -225,6 +279,72 @@ export default function Dashboard() {
               <div className="p-3">
                 <p className="text-sm font-semibold text-slate-500">Revenue</p>
                 <p className="mt-1 text-2xl font-bold text-primary-strong">{formatCurrency(stats.totalSales ?? 0)}</p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="p-4 bg-white border rounded">
+                <h3 className="text-sm font-medium text-slate-600">Revenue (last 7 days)</h3>
+                <div className="mt-3 h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={salesData} margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.8} />
+                          <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="revenue" stroke="#2563EB" fillOpacity={1} fill="url(#colorRev)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white border rounded">
+                <h3 className="text-sm font-medium text-slate-600">Orders (last 7 days)</h3>
+                <div className="mt-3 h-40">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={salesData} margin={{ top: 0, right: 12, left: 0, bottom: 0 }}>
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} />
+                      <Tooltip />
+                      <Bar dataKey="orders" fill="#34D399" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white border rounded">
+                <h3 className="text-sm font-medium text-slate-600">Product stock</h3>
+                <div className="mt-3 h-40 flex items-center justify-center">
+                  <ResponsiveContainer width="80%" height="80%">
+                    <PieChart>
+                      <Pie data={productStockData} dataKey="value" nameKey="name" innerRadius={30} outerRadius={60}>
+                        {productStockData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={index === 0 ? '#10B981' : '#F97316'} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="p-4 bg-white border rounded">
+                <h3 className="text-sm font-medium text-slate-600">Users</h3>
+                <div className="mt-3 h-40 flex items-center justify-center">
+                  <ResponsiveContainer width="80%" height="80%">
+                    <PieChart>
+                      <Pie data={usersByRole} dataKey="value" nameKey="name" innerRadius={30} outerRadius={60}>
+                        {usersByRole.map((entry, index) => (
+                          <Cell key={`cell2-${index}`} fill={index === 0 ? '#6366F1' : '#F43F5E'} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           </section>
@@ -393,14 +513,32 @@ export default function Dashboard() {
               <div className="card-soft p-4">
                 <h2 className="font-semibold">Store settings</h2>
                 <div className="mt-3 grid gap-3">
+                  <label className="text-sm text-slate-600">Store name</label>
                   <input className="input-field" placeholder="Store name" value={settings?.storeName || ''} onChange={(e)=>setSettings((s)=>({...(s||{}),storeName:e.target.value}))} />
+
                   <label className="text-sm text-slate-600">Theme</label>
                   <select className="input-field w-48" value={settings?.theme || 'light'} onChange={(e)=>setSettings((s)=>({...(s||{}),theme:e.target.value}))}>
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
+
+                  <label className="text-sm text-slate-600">Visibility</label>
+                  <select className="input-field w-48" value={settings?.visibility || 'public'} onChange={(e)=>setSettings((s)=>({...(s||{}),visibility:e.target.value}))}>
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
+
+                  <label className="text-sm text-slate-600">Admin access level</label>
+                  <select className="input-field w-48" value={settings?.adminAccessLevel || 'full'} onChange={(e)=>setSettings((s)=>({...(s||{}),adminAccessLevel:e.target.value}))}>
+                    <option value="full">Full</option>
+                    <option value="limited">Limited</option>
+                  </select>
+
+                  <label className="text-sm text-slate-600">Auto refresh interval (seconds)</label>
+                  <input className="input-field w-48" type="number" min="5" value={settings?.autoRefreshInterval ?? 30} onChange={(e)=>setSettings((s)=>({...(s||{}),autoRefreshInterval: Number(e.target.value)}))} />
+
                   <div>
-                    <button className="btn-primary" onClick={()=>handleSaveSettings({storeName: settings?.storeName, theme: settings?.theme})}>Save settings</button>
+                    <button className="btn-primary" onClick={()=>handleSaveSettings({storeName: settings?.storeName, theme: settings?.theme, visibility: settings?.visibility, adminAccessLevel: settings?.adminAccessLevel, autoRefreshInterval: settings?.autoRefreshInterval})}>Save settings</button>
                   </div>
                 </div>
               </div>
