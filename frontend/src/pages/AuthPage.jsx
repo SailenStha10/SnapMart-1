@@ -123,7 +123,7 @@ export default function AuthPage({ initialMode = 'login' }){
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="section-kicker">Welcome back</p>
-                    <h2 className="mt-3 text-2xl font-bold text-primary-strong">Login to SnapMart</h2>
+                    <h2 className="mt-3 text-2xl font-bold text-primary-strong">Login to KOSHELI</h2>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl brand-gradient text-white">
                     <FiLock />
@@ -157,7 +157,7 @@ export default function AuthPage({ initialMode = 'login' }){
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="section-kicker">Create account</p>
-                    <h2 className="mt-3 text-2xl font-bold text-primary-strong">Join SnapMart</h2>
+                    <h2 className="mt-3 text-2xl font-bold text-primary-strong">Join KOSHELI</h2>
                   </div>
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl brand-gradient text-white">
                     <FiUser />

@@ -7,7 +7,7 @@ export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState(() => {
     if (typeof window === 'undefined') return []
     try {
-      return JSON.parse(localStorage.getItem('snapmart-cart') || '[]')
+      return JSON.parse(localStorage.getItem('kosheli-cart') || '[]')
     } catch {
       return []
     }
@@ -16,18 +16,18 @@ export function CartProvider({ children }) {
   const [wishlistItems, setWishlistItems] = useState(() => {
     if (typeof window === 'undefined') return []
     try {
-      return JSON.parse(localStorage.getItem('snapmart-wishlist') || '[]')
+      return JSON.parse(localStorage.getItem('kosheli-wishlist') || '[]')
     } catch {
       return []
     }
   })
 
   useEffect(() => {
-    localStorage.setItem('snapmart-cart', JSON.stringify(cartItems))
+    localStorage.setItem('kosheli-cart', JSON.stringify(cartItems))
   }, [cartItems])
 
   useEffect(() => {
-    localStorage.setItem('snapmart-wishlist', JSON.stringify(wishlistItems))
+    localStorage.setItem('kosheli-wishlist', JSON.stringify(wishlistItems))
   }, [wishlistItems])
 
   const addToCart = (product) => {

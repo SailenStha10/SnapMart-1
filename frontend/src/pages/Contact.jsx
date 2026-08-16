@@ -6,7 +6,7 @@ const details = [
   {
     icon: FiMail,
     title: 'Email',
-    text: 'support@snapmart.com',
+    text: 'support@kosheli.com',
   },
   {
     icon: FiPhone,

@@ -30,7 +30,7 @@ export default function About(){
         <div className="absolute inset-0 scene-grid opacity-50" />
         <div className="relative mx-auto grid max-w-6xl gap-10 lg:min-h-[calc(100vh-14rem)] lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
           <div>
-            <span className="section-kicker">About SnapMart</span>
+            <span className="section-kicker">About KOSHELI</span>
            
             
           </div>

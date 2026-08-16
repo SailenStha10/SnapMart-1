@@ -1,6 +1,6 @@
-# Snapmart — Frontend
+# KOSHELI — Frontend
 
-This folder contains the frontend scaffold for the Snapmart project (Vite + React + Tailwind).
+This folder contains the frontend scaffold for the KOSHELI project (Vite + React + Tailwind).
 
 Run locally:
 

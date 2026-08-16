@@ -70,7 +70,7 @@ export default function Home({ initialSection = 'hero' }) {
         <div className="relative mx-auto flex min-h-[calc(100vh-14rem)] max-w-4xl flex-col items-center justify-center text-center">
           <span className="section-kicker mx-auto">Fresh grocery commerce</span>
           <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-bold leading-tight text-primary-strong sm:text-5xl lg:text-6xl">
-            SnapMart
+            KOSHELI
           </h1>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -103,7 +103,7 @@ export default function Home({ initialSection = 'hero' }) {
         className="reveal grid gap-6 lg:min-h-[78vh] lg:grid-cols-[1.08fr_0.92fr] lg:items-start"
       >
         <div className="space-y-4">
-          <span className="section-kicker">About SnapMart</span>
+          <span className="section-kicker">About KOSHELI</span>
           <h2 className="max-w-xl text-3xl font-bold text-primary-strong sm:text-4xl">
             A separate section for the project story.
           </h2>
@@ -151,7 +151,7 @@ export default function Home({ initialSection = 'hero' }) {
         <div className="space-y-4">
           <span className="section-kicker">Services</span>
           <h2 className="max-w-xl text-3xl font-bold text-primary-strong sm:text-4xl">
-            What SnapMart offers in a single scroll flow.
+            What KOSHELI offers in a single scroll flow.
           </h2>
           <p className="text-slate-600">
             The services section stays centered and readable while the page transitions naturally between content blocks.
@@ -205,7 +205,7 @@ export default function Home({ initialSection = 'hero' }) {
           </p>
           <div className="space-y-3 text-sm text-slate-600">
             <div className="flex items-center gap-3">
-              <FiMail className="text-primary" /> support@snapmart.com
+              <FiMail className="text-primary" /> support@kosheli.com
             </div>
             <div className="flex items-center gap-3">
               <FiPhone className="text-primary" /> +1 (555) 014-2026
