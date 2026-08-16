@@ -74,8 +74,9 @@ export const register = async (req, res) => {
     }
 
     const { name, email, password, phone, address, city, sessionId } = req.body
+    const normalizedEmail = String(email || '').toLowerCase().trim()
 
-    const existingUser = await User.findOne({ email })
+    const existingUser = await User.findOne({ email: normalizedEmail })
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' })
     }
@@ -84,7 +85,7 @@ export const register = async (req, res) => {
 
     const user = new User({
       name,
-      email,
+      email: normalizedEmail,
       phone,
       address,
       city,
@@ -141,8 +142,9 @@ export const login = async (req, res) => {
     }
 
     const { email, password, sessionId } = req.body
+    const normalizedEmail = String(email || '').toLowerCase().trim()
 
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email: normalizedEmail })
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' })
     }
@@ -188,7 +190,8 @@ export const forgotPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email is required' })
     }
 
-    const user = await User.findOne({ email })
+    const normalizedEmail = String(email).toLowerCase().trim()
+    const user = await User.findOne({ email: normalizedEmail })
     if (!user) {
       return res.status(200).json({ message: 'If that email is registered, a reset link was sent' })
     }
