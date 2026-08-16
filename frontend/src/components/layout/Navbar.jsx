@@ -25,7 +25,7 @@ export default function Navbar() {
             S
           </span>
           <span>
-            <span className="block text-sm font-bold leading-none text-primary-strong">SnapMart</span>
+            <span className="block text-sm font-bold leading-none text-primary-strong">KOSHELI</span>
           </span>
         </Link>
 

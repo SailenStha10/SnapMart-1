@@ -15,11 +15,11 @@ import api from '../services/api'
 import useCart from '../hooks/useCart'
 
 const defaultProduct = {
-  shop: 'SnapMart',
+  shop: 'KOSHELI',
   rating: 0,
   reviews: 0,
   badge: '',
-  brand: 'SnapMart',
+  brand: 'KOSHELI',
   priceRange: '',
   inStorePickup: true,
   sameDayDelivery: true,

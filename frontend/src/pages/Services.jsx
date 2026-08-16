@@ -32,7 +32,7 @@ export default function Services(){
           <div>
             <span className="section-kicker">Services</span>
             <h1 className="mt-6 max-w-2xl text-4xl font-bold leading-tight text-primary-strong sm:text-5xl">
-              A dedicated page for SnapMart services and structure.
+              A dedicated page for KOSHELI services and structure.
             </h1>
             <p className="mt-5 max-w-2xl text-base text-slate-600 sm:text-lg">
               This page stays separate and scrollable, so the services content changes naturally as the user moves down the page.
