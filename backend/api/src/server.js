@@ -37,6 +37,11 @@ app.use((req, res, next) => {
   next()
 })
 
+// Lightweight health check
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, db: isDatabaseConnected() })
+})
+
 // Schedule cart cleanup for expired guest carts
 scheduleCartCleanup()
 
