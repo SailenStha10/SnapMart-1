@@ -11,7 +11,7 @@ const details = [
   {
     icon: FiPhone,
     title: 'Phone',
-    text: '+1 (555) 014-2026',
+    text: '9707743309',
   },
   {
     icon: FiMapPin,
